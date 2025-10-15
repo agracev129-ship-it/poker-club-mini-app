@@ -17,7 +17,8 @@ let appData = {
     rating: [],
     achievements: [],
     registeredUsers: [],
-    tournamentParticipants: {}
+    tournamentParticipants: {},
+    selectedAvatar: null
 };
 
 // ID администратора (замени на свой Telegram ID)
@@ -230,6 +231,11 @@ function loadUserData() {
         document.getElementById('userNickname').textContent = appData.currentUser.gameNickname;
         document.getElementById('profileNickname').style.display = 'block';
         
+        // Обновляем аватарку
+        const avatar = appData.currentUser.avatar || '👤';
+        document.getElementById('profileAvatar').textContent = avatar;
+        document.getElementById('userAvatar').textContent = avatar;
+        
         // Обновляем статистику
         document.getElementById('totalWins').textContent = appData.currentUser.stats.totalWins;
         document.getElementById('totalGames').textContent = appData.currentUser.stats.totalGames;
@@ -247,7 +253,26 @@ function loadUserData() {
 
 // Загрузка турниров
 function loadTournaments() {
+    updateTournamentStatuses();
     renderTournaments();
+}
+
+// Обновление статусов турниров
+function updateTournamentStatuses() {
+    const now = new Date();
+    
+    appData.tournaments.forEach(tournament => {
+        const tournamentDate = new Date(tournament.date);
+        const endDate = new Date(tournamentDate.getTime() + tournament.duration * 60 * 60 * 1000);
+        
+        if (tournament.status === 'upcoming' && now >= tournamentDate) {
+            tournament.status = 'active';
+        } else if (tournament.status === 'active' && now >= endDate) {
+            // Турнир автоматически не завершается, только админ может его завершить
+        }
+    });
+    
+    Storage.save('tournaments', appData.tournaments);
 }
 
 // Загрузка рейтинга
@@ -351,6 +376,14 @@ function renderTournaments(tournaments = appData.tournaments) {
                         <i class="fas fa-users"></i>
                     </button>
                 </div>
+                ${appData.isAdmin && tournament.status === 'active' ? `
+                <div class="tournament-management">
+                    <button class="btn-finish" onclick="finishTournament(${tournament.id})">
+                        <i class="fas fa-stop"></i>
+                        Завершить турнир
+                    </button>
+                </div>
+                ` : ''}
             </div>
         `;
     }).join('');
@@ -457,9 +490,11 @@ function showUserProfile(nickname) {
         ? Math.round((user.stats.totalWins / user.stats.totalGames) * 100)
         : 0;
     
+    const avatar = user.avatar || user.gameNickname.charAt(0).toUpperCase();
+    
     container.innerHTML = `
         <div class="user-profile-header">
-            <div class="user-avatar-large">${user.gameNickname.charAt(0).toUpperCase()}</div>
+            <div class="user-avatar-large">${avatar}</div>
             <div class="user-info-large">
                 <h3>${user.gameNickname}</h3>
                 <p>Ранг: ${getRankName(user.stats.currentRank)}</p>
@@ -486,6 +521,22 @@ function showUserProfile(nickname) {
                 <span>Предпочитаемая игра:</span>
                 <span>${getGameTypeName(user.preferredGame)}</span>
             </div>
+            ${appData.isAdmin ? `
+            <div class="user-details">
+                <div class="user-detail-item">
+                    <span class="user-detail-label">Telegram ID:</span>
+                    <span class="user-detail-value">${user.telegramId}</span>
+                </div>
+                <div class="user-detail-item">
+                    <span class="user-detail-label">Telegram Username:</span>
+                    <span class="user-detail-value">@${appData.user?.username || 'не указан'}</span>
+                </div>
+                <div class="user-detail-item">
+                    <span class="user-detail-label">Дата регистрации:</span>
+                    <span class="user-detail-value">${formatDate(user.registrationDate)}</span>
+                </div>
+            </div>
+            ` : ''}
         </div>
     `;
     
@@ -542,18 +593,27 @@ function showUsersList() {
     if (!appData.isAdmin) return;
     
     const container = document.getElementById('usersList');
-    container.innerHTML = appData.registeredUsers.map(user => `
-        <div class="user-item" onclick="showUserProfile('${user.gameNickname}')">
-            <div class="user-avatar-small">${user.gameNickname.charAt(0).toUpperCase()}</div>
-            <div class="user-info-small">
-                <div class="user-name-small">${user.gameNickname}</div>
-                <div class="user-stats-small">
-                    ${user.stats.points} очков • ${user.stats.totalGames} игр • 
-                    Зарегистрирован ${formatDate(user.registrationDate)}
+    container.innerHTML = appData.registeredUsers.map(user => {
+        const avatar = user.avatar || user.gameNickname.charAt(0).toUpperCase();
+        return `
+            <div class="user-item" onclick="showUserProfile('${user.gameNickname}')">
+                <div class="user-avatar-small">${avatar}</div>
+                <div class="user-info-small">
+                    <div class="user-name-small">${user.gameNickname}</div>
+                    <div class="user-stats-small">
+                        ${user.stats.points} очков • ${user.stats.totalGames} игр • 
+                        Зарегистрирован ${formatDate(user.registrationDate)}
+                    </div>
+                    <div class="user-details">
+                        <div class="user-detail-item">
+                            <span class="user-detail-label">Telegram ID:</span>
+                            <span class="user-detail-value">${user.telegramId}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     
     document.getElementById('usersListModal').style.display = 'block';
 }
@@ -728,6 +788,74 @@ tg.onEvent('viewportChanged', function() {
     console.log('Размер окна изменился');
 });
 
+// Функции для работы с аватарками
+function showAvatarModal() {
+    appData.selectedAvatar = appData.currentUser?.avatar || '👤';
+    document.getElementById('avatarPreview').textContent = appData.selectedAvatar;
+    document.getElementById('avatarModal').style.display = 'block';
+}
+
+function selectEmojiAvatar(emoji) {
+    appData.selectedAvatar = emoji;
+    document.getElementById('avatarPreview').textContent = emoji;
+    
+    // Убираем выделение с других опций
+    document.querySelectorAll('.avatar-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Выделяем выбранную опцию
+    event.target.classList.add('selected');
+}
+
+function uploadAvatar() {
+    // В реальном приложении здесь была бы загрузка файла
+    showAlert('Функция загрузки фото будет добавлена в следующих версиях');
+}
+
+function saveAvatar() {
+    if (appData.currentUser) {
+        appData.currentUser.avatar = appData.selectedAvatar;
+        Storage.save('currentUser', appData.currentUser);
+        
+        // Обновляем пользователя в списке
+        const userIndex = appData.registeredUsers.findIndex(u => u.telegramId === appData.currentUser.telegramId);
+        if (userIndex !== -1) {
+            appData.registeredUsers[userIndex].avatar = appData.selectedAvatar;
+            Storage.save('registeredUsers', appData.registeredUsers);
+        }
+        
+        closeModal('avatarModal');
+        loadUserData();
+        showAlert('Аватарка сохранена!');
+    }
+}
+
+// Функция завершения турнира
+function finishTournament(tournamentId) {
+    if (!appData.isAdmin) return;
+    
+    const tournament = appData.tournaments.find(t => t.id === tournamentId);
+    if (!tournament) return;
+    
+    tournament.status = 'finished';
+    Storage.save('tournaments', appData.tournaments);
+    renderTournaments();
+    showAlert(`Турнир "${tournament.name}" завершен!`);
+}
+
+// Функция для кликабельной кнопки "Все время" в рейтинге
+function switchRatingPeriod(period) {
+    // Здесь можно добавить логику смены периода рейтинга
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Перезагружаем рейтинг
+    loadRating();
+}
+
 // Экспорт функций для глобального использования
 window.joinTournament = joinTournament;
 window.switchTab = switchTab;
@@ -743,6 +871,12 @@ window.loginAsUser = loginAsUser;
 window.loginAsAdmin = loginAsAdmin;
 window.registerUser = registerUser;
 window.logout = logout;
+window.showAvatarModal = showAvatarModal;
+window.selectEmojiAvatar = selectEmojiAvatar;
+window.uploadAvatar = uploadAvatar;
+window.saveAvatar = saveAvatar;
+window.finishTournament = finishTournament;
+window.switchRatingPeriod = switchRatingPeriod;
 
 // Экспорт функций для использования в других скриптах
 window.TelegramApp = {

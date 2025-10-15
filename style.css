@@ -13,6 +13,30 @@ body {
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
+    /* Отключаем зум */
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Отключаем зум для всех элементов */
+* {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Разрешаем выделение текста только для input и textarea */
+input, textarea {
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
 }
 
 .app {
@@ -218,6 +242,12 @@ body {
 .action-btn i {
     color: #3498db;
     font-size: 18px;
+    flex-shrink: 0;
+}
+
+.action-btn span {
+    flex: 1;
+    text-align: left;
 }
 
 /* Recent Activity */
@@ -347,11 +377,16 @@ body {
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
 .btn-participants:hover {
     background: #7f8c8d;
     transform: scale(1.1);
+}
+
+.btn-participants i {
+    font-size: 16px;
 }
 
 .tournament-header {
@@ -520,6 +555,35 @@ body {
 .profile-info p {
     opacity: 0.9;
     font-size: 16px;
+}
+
+.change-avatar-btn {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.change-avatar-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: translateY(-1px);
+}
+
+.profile-avatar {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.profile-avatar:hover {
+    transform: scale(1.05);
 }
 
 /* Profile Stats */
@@ -879,6 +943,7 @@ body {
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     margin-bottom: 25px;
+    align-items: stretch;
 }
 
 .admin-stat-card {
@@ -888,6 +953,33 @@ body {
     text-align: center;
     box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     border: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 120px;
+}
+
+.admin-stat-card .stat-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.admin-stat-card .stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--tg-theme-text-color, #2c3e50);
+    margin-bottom: 5px;
+    display: block;
+}
+
+.admin-stat-card .stat-label {
+    font-size: 12px;
+    color: var(--tg-theme-hint-color, #7f8c8d);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: block;
 }
 
 .admin-actions {
@@ -1033,6 +1125,132 @@ body {
 .stat-row span:last-child {
     color: var(--tg-theme-hint-color, #7f8c8d);
     font-weight: 500;
+}
+
+/* Avatar Selection Styles */
+.avatar-options {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.avatar-option {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.avatar-option:hover {
+    border-color: #3498db;
+    transform: scale(1.1);
+}
+
+.avatar-option.selected {
+    border-color: #2ecc71;
+    background: #e8f5e8;
+}
+
+.avatar-upload {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.avatar-upload-btn {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.avatar-upload-btn:hover {
+    background: #2980b9;
+    transform: translateY(-2px);
+}
+
+.avatar-preview {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    margin: 0 auto;
+}
+
+/* Tournament Status Management */
+.tournament-management {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-finish {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-finish:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+/* User Details in Admin Panel */
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.user-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.user-detail-item:last-child {
+    border-bottom: none;
+}
+
+.user-detail-label {
+    font-weight: 600;
+    color: var(--tg-theme-text-color, #2c3e50);
+    font-size: 14px;
+}
+
+.user-detail-value {
+    color: var(--tg-theme-hint-color, #7f8c8d);
+    font-size: 14px;
+    font-family: monospace;
 }
 
 /* Profile Actions */
