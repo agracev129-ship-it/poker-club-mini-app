@@ -118,7 +118,32 @@ function loginAsAdmin() {
 // Показать модальное окно регистрации
 function showRegistrationModal() {
     closeModal('loginModal');
+    
+    // Запрашиваем доступ к контактам и аватарке
+    requestTelegramData();
+    
     document.getElementById('registrationModal').style.display = 'block';
+}
+
+// Запрос данных из Telegram
+function requestTelegramData() {
+    if (tg.initDataUnsafe.user) {
+        const user = tg.initDataUnsafe.user;
+        
+        // Пытаемся получить аватарку из Telegram
+        if (user.photo_url) {
+            // Если есть URL аватарки, сохраняем его
+            appData.telegramAvatar = user.photo_url;
+            console.log('Telegram avatar URL:', user.photo_url);
+        }
+        
+        // Запрашиваем доступ к контактам (если доступно)
+        if (tg.requestContact) {
+            tg.requestContact();
+        }
+        
+        console.log('Telegram user data:', user);
+    }
 }
 
 // Регистрация пользователя
@@ -139,11 +164,14 @@ function registerUser() {
     const newUser = {
         telegramId: appData.user.id,
         telegramName: appData.user.first_name,
+        telegramUsername: appData.user.username,
         gameNickname: nickname,
         preferredGame: preferredGame,
         isAdmin: false,
         stats: { totalWins: 0, totalGames: 0, currentRank: 1, points: 0 },
-        registrationDate: new Date().toISOString()
+        registrationDate: new Date().toISOString(),
+        avatar: appData.telegramAvatar ? 'telegram' : '👤', // Сохраняем флаг аватарки из Telegram
+        telegramAvatarUrl: appData.telegramAvatar || null
     };
     
     appData.registeredUsers.push(newUser);
@@ -158,6 +186,11 @@ function registerUser() {
     updateUserInterface();
     loadAllData();
     showAlert(`Добро пожаловать в Poker Club, ${nickname}! 🎉`);
+    
+    // Обновляем рейтинг после регистрации
+    setTimeout(() => {
+        loadRating();
+    }, 500);
 }
 
 // Поиск пользователя по Telegram ID
@@ -232,7 +265,13 @@ function loadUserData() {
         document.getElementById('profileNickname').style.display = 'block';
         
         // Обновляем аватарку
-        const avatar = appData.currentUser.avatar || '👤';
+        let avatar = appData.currentUser.avatar || '👤';
+        
+        // Если аватарка из Telegram, показываем специальный символ
+        if (avatar === 'telegram' && appData.currentUser.telegramAvatarUrl) {
+            avatar = '📷'; // Символ камеры для аватарки из Telegram
+        }
+        
         document.getElementById('profileAvatar').textContent = avatar;
         document.getElementById('userAvatar').textContent = avatar;
         
@@ -302,9 +341,15 @@ function loadAchievements() {
 // Загрузка зарегистрированных пользователей
 function loadRegisteredUsers() {
     if (appData.isAdmin) {
-        document.getElementById('totalUsers').textContent = appData.registeredUsers.length;
-        document.getElementById('totalTournaments').textContent = appData.tournaments.length;
-        document.getElementById('activeGames').textContent = appData.tournaments.filter(t => t.status === 'active').length;
+        const totalUsers = appData.registeredUsers.length;
+        const totalTournaments = appData.tournaments.length;
+        const activeGames = appData.tournaments.filter(t => t.status === 'active').length;
+        
+        document.getElementById('totalUsers').textContent = totalUsers;
+        document.getElementById('totalTournaments').textContent = totalTournaments;
+        document.getElementById('activeGames').textContent = activeGames;
+        
+        console.log('Admin stats updated:', { totalUsers, totalTournaments, activeGames });
     }
 }
 
@@ -450,7 +495,9 @@ function joinTournament(tournamentId) {
     tournament.participants.push({
         telegramId: appData.currentUser.telegramId,
         nickname: appData.currentUser.gameNickname,
-        joinDate: new Date().toISOString()
+        joinDate: new Date().toISOString(),
+        avatar: appData.currentUser.avatar,
+        telegramAvatarUrl: appData.currentUser.telegramAvatarUrl
     });
     
     Storage.save('tournaments', appData.tournaments);
@@ -467,15 +514,24 @@ function showTournamentParticipants(tournamentId) {
     const participants = tournament.participants || [];
     const container = document.getElementById('participantsList');
     
-    container.innerHTML = participants.map((participant, index) => `
-        <div class="participant-item" onclick="showUserProfile('${participant.nickname}')">
-            <div class="user-avatar-small">${index + 1}</div>
-            <div class="user-info-small">
-                <div class="user-name-small">${participant.nickname}</div>
-                <div class="user-stats-small">Участник с ${formatDate(participant.joinDate)}</div>
+    container.innerHTML = participants.map((participant, index) => {
+        let avatar = participant.avatar || participant.nickname.charAt(0).toUpperCase();
+        
+        // Если аватарка из Telegram, показываем специальный символ
+        if (avatar === 'telegram' && participant.telegramAvatarUrl) {
+            avatar = '📷';
+        }
+        
+        return `
+            <div class="participant-item" onclick="showUserProfile('${participant.nickname}')">
+                <div class="user-avatar-small">${avatar}</div>
+                <div class="user-info-small">
+                    <div class="user-name-small">${participant.nickname}</div>
+                    <div class="user-stats-small">Участник с ${formatDate(participant.joinDate)}</div>
+                </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     
     document.getElementById('participantsModal').style.display = 'block';
 }
@@ -490,7 +546,12 @@ function showUserProfile(nickname) {
         ? Math.round((user.stats.totalWins / user.stats.totalGames) * 100)
         : 0;
     
-    const avatar = user.avatar || user.gameNickname.charAt(0).toUpperCase();
+    let avatar = user.avatar || user.gameNickname.charAt(0).toUpperCase();
+    
+    // Если аватарка из Telegram, показываем специальный символ
+    if (avatar === 'telegram' && user.telegramAvatarUrl) {
+        avatar = '📷';
+    }
     
     container.innerHTML = `
         <div class="user-profile-header">
@@ -605,6 +666,53 @@ function showUsersList() {
                         Зарегистрирован ${formatDate(user.registrationDate)}
                     </div>
                     <div class="user-details">
+                        <div class="user-detail-item">
+                            <span class="user-detail-label">Telegram ID:</span>
+                            <span class="user-detail-value">${user.telegramId}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    document.getElementById('usersListModal').style.display = 'block';
+}
+
+// Показать всех пользователей с рейтингом
+function showAllUsers() {
+    if (!appData.isAdmin) return;
+    
+    // Сортируем пользователей по рейтингу
+    const sortedUsers = [...appData.registeredUsers].sort((a, b) => b.stats.points - a.stats.points);
+    
+    const container = document.getElementById('usersList');
+    container.innerHTML = sortedUsers.map((user, index) => {
+        let avatar = user.avatar || user.gameNickname.charAt(0).toUpperCase();
+        
+        // Если аватарка из Telegram, показываем специальный символ
+        if (avatar === 'telegram' && user.telegramAvatarUrl) {
+            avatar = '📷';
+        }
+        
+        const winRate = user.stats.totalGames > 0 
+            ? Math.round((user.stats.totalWins / user.stats.totalGames) * 100)
+            : 0;
+            
+        return `
+            <div class="user-item" onclick="showUserProfile('${user.gameNickname}')">
+                <div class="user-rank-badge">${index + 1}</div>
+                <div class="user-avatar-small">${avatar}</div>
+                <div class="user-info-small">
+                    <div class="user-name-small">${user.gameNickname}</div>
+                    <div class="user-stats-small">
+                        <strong>${user.stats.points} очков</strong> • ${user.stats.totalGames} игр • ${winRate}% побед
+                    </div>
+                    <div class="user-details">
+                        <div class="user-detail-item">
+                            <span class="user-detail-label">Ранг:</span>
+                            <span class="user-detail-value">${getRankName(user.stats.currentRank)}</span>
+                        </div>
                         <div class="user-detail-item">
                             <span class="user-detail-label">Telegram ID:</span>
                             <span class="user-detail-value">${user.telegramId}</span>
@@ -877,6 +985,7 @@ window.uploadAvatar = uploadAvatar;
 window.saveAvatar = saveAvatar;
 window.finishTournament = finishTournament;
 window.switchRatingPeriod = switchRatingPeriod;
+window.showAllUsers = showAllUsers;
 
 // Экспорт функций для использования в других скриптах
 window.TelegramApp = {

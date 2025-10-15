@@ -248,6 +248,8 @@ input, textarea {
 .action-btn span {
     flex: 1;
     text-align: left;
+    color: var(--tg-theme-text-color, #2c3e50);
+    font-weight: 500;
 }
 
 /* Recent Activity */
@@ -982,6 +984,17 @@ input, textarea {
     display: block;
 }
 
+.admin-stat-card.clickable {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.admin-stat-card.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
 .admin-actions {
     display: flex;
     flex-direction: column;
@@ -1251,6 +1264,21 @@ input, textarea {
     color: var(--tg-theme-hint-color, #7f8c8d);
     font-size: 14px;
     font-family: monospace;
+}
+
+.user-rank-badge {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 10px;
+    flex-shrink: 0;
 }
 
 /* Profile Actions */
