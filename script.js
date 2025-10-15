@@ -5,92 +5,139 @@ const API_BASE = 'http://localhost:3000/api';
 const API = {
     // Получить всех пользователей
     async getUsers() {
-        const response = await fetch(`${API_BASE}/users`);
-        if (!response.ok) throw new Error('Ошибка загрузки пользователей');
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/users`);
+            if (!response.ok) throw new Error('Ошибка загрузки пользователей');
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            // Fallback на localStorage
+            return Storage.load('registeredUsers', []);
+        }
     },
 
     // Получить пользователя по Telegram ID
     async getUserByTelegramId(telegramId) {
-        const response = await fetch(`${API_BASE}/users/telegram/${telegramId}`);
-        if (response.status === 404) return null;
-        if (!response.ok) throw new Error('Ошибка загрузки пользователя');
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/users/telegram/${telegramId}`);
+            if (response.status === 404) return null;
+            if (!response.ok) throw new Error('Ошибка загрузки пользователя');
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            return null;
+        }
     },
 
     // Создать пользователя
     async createUser(userData) {
-        const response = await fetch(`${API_BASE}/users`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Ошибка создания пользователя');
+        try {
+            const response = await fetch(`${API_BASE}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData)
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Ошибка создания пользователя');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
         }
-        return await response.json();
     },
 
     // Обновить пользователя
     async updateUser(userId, userData) {
-        const response = await fetch(`${API_BASE}/users/${userId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
-        if (!response.ok) throw new Error('Ошибка обновления пользователя');
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/users/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(userData)
+            });
+            if (!response.ok) throw new Error('Ошибка обновления пользователя');
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
     },
 
     // Получить все турниры
     async getTournaments() {
-        const response = await fetch(`${API_BASE}/tournaments`);
-        if (!response.ok) throw new Error('Ошибка загрузки турниров');
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/tournaments`);
+            if (!response.ok) throw new Error('Ошибка загрузки турниров');
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            // Fallback на localStorage
+            return Storage.load('tournaments', []);
+        }
     },
 
     // Создать турнир
     async createTournament(tournamentData) {
-        const response = await fetch(`${API_BASE}/tournaments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tournamentData)
-        });
-        if (!response.ok) throw new Error('Ошибка создания турнира');
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/tournaments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tournamentData)
+            });
+            if (!response.ok) throw new Error('Ошибка создания турнира');
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
     },
 
     // Присоединиться к турниру
     async joinTournament(tournamentId, userId) {
-        const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/join`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId })
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Ошибка присоединения к турниру');
+        try {
+            const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/join`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Ошибка присоединения к турниру');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
         }
-        return await response.json();
     },
 
     // Обновить статус турнира
     async updateTournamentStatus(tournamentId, status) {
-        const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
-        });
-        if (!response.ok) throw new Error('Ошибка обновления статуса турнира');
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/status`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            if (!response.ok) throw new Error('Ошибка обновления статуса турнира');
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
     },
 
     // Получить статистику
     async getStats() {
-        const response = await fetch(`${API_BASE}/admin/stats`);
-        if (!response.ok) throw new Error('Ошибка загрузки статистики');
-        return await response.json();
+        try {
+            const response = await fetch(`${API_BASE}/admin/stats`);
+            if (!response.ok) throw new Error('Ошибка загрузки статистики');
+            return await response.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            return { totalUsers: 0, totalTournaments: 0, activeGames: 0 };
+        }
     }
 };
 
@@ -166,7 +213,10 @@ async function initializeData() {
         Storage.save('registeredUsers', appData.registeredUsers);
         Storage.save('tournaments', appData.tournaments);
         
-        console.log('Данные загружены с сервера');
+        console.log('Данные загружены с сервера:', {
+            users: appData.registeredUsers.length,
+            tournaments: appData.tournaments.length
+        });
     } catch (error) {
         console.error('Ошибка загрузки данных с сервера:', error);
         
@@ -174,7 +224,10 @@ async function initializeData() {
         appData.registeredUsers = Storage.load('registeredUsers', []);
         appData.tournaments = Storage.load('tournaments', []);
         
-        console.log('Используем данные из localStorage');
+        console.log('Используем данные из localStorage:', {
+            users: appData.registeredUsers.length,
+            tournaments: appData.tournaments.length
+        });
     }
 }
 
