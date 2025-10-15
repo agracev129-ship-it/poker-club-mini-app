@@ -17,7 +17,7 @@
                     <i class="fas fa-spade"></i>
                     <span>Poker Club</span>
                 </div>
-                <div class="user-profile" id="userProfile">
+                <div class="user-profile clickable" id="userProfile" onclick="switchTab('profile')">
                     <div class="user-avatar" id="userAvatar">👤</div>
                     <div class="user-info">
                         <div class="user-name" id="userName">Загрузка...</div>
@@ -26,6 +26,55 @@
                 </div>
             </div>
         </header>
+
+        <!-- Login Modal -->
+        <div class="modal" id="loginModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Выберите режим входа</h2>
+                    <button class="close-btn" onclick="closeModal('loginModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <button class="login-btn user-mode" onclick="loginAsUser()">
+                        <i class="fas fa-user"></i>
+                        <span>Войти как игрок</span>
+                    </button>
+                    <button class="login-btn admin-mode" id="adminLoginBtn" onclick="loginAsAdmin()" style="display: none;">
+                        <i class="fas fa-crown"></i>
+                        <span>Войти как администратор</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Modal -->
+        <div class="modal" id="registrationModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Регистрация в Poker Club</h2>
+                    <button class="close-btn" onclick="closeModal('registrationModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="gameNickname">Игровой никнейм:</label>
+                        <input type="text" id="gameNickname" placeholder="Введите ваш никнейм" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="preferredGame">Предпочитаемый тип игры:</label>
+                        <select id="preferredGame">
+                            <option value="texas">Техасский Холдем</option>
+                            <option value="omaha">Омаха</option>
+                            <option value="stud">Студ</option>
+                            <option value="mixed">Смешанные игры</option>
+                        </select>
+                    </div>
+                    <button class="register-btn" onclick="registerUser()">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Зарегистрироваться</span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Navigation -->
         <nav class="nav-tabs">
@@ -114,9 +163,14 @@
             <div class="tab-content" id="tournaments">
                 <div class="section-header">
                     <h2>Турниры</h2>
-                    <button class="btn-refresh" id="refreshTournaments">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
+                    <div class="header-actions">
+                        <button class="btn-refresh" id="refreshTournaments">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn-add" id="addTournamentBtn" onclick="showAddTournamentModal()" style="display: none;">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="tournament-filters">
@@ -127,27 +181,7 @@
                 </div>
 
                 <div class="tournaments-list" id="tournamentsList">
-                    <div class="tournament-card">
-                        <div class="tournament-header">
-                            <h3>Ежедневный турнир</h3>
-                            <span class="tournament-status active">Активен</span>
-                        </div>
-                        <div class="tournament-info">
-                            <div class="info-item">
-                                <i class="fas fa-clock"></i>
-                                <span>19:00 - 21:00</span>
-                            </div>
-                            <div class="info-item">
-                                <i class="fas fa-users"></i>
-                                <span>12/20 игроков</span>
-                            </div>
-                            <div class="info-item">
-                                <i class="fas fa-trophy"></i>
-                                <span>Приз: 100 очков</span>
-                            </div>
-                        </div>
-                        <button class="btn-join">Присоединиться</button>
-                    </div>
+                    <!-- Турниры будут загружены динамически -->
                 </div>
             </div>
 
@@ -180,6 +214,7 @@
                     <div class="profile-info">
                         <h2 id="profileName">Игрок</h2>
                         <p id="profileRank">Ранг: Новичок</p>
+                        <p id="profileNickname" style="display: none;">Ник: <span id="userNickname">-</span></p>
                     </div>
                 </div>
 
@@ -188,15 +223,19 @@
                     <div class="stats-list">
                         <div class="stat-item">
                             <span class="stat-label">Игр сыграно:</span>
-                            <span class="stat-value">0</span>
+                            <span class="stat-value" id="profileGames">0</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Побед:</span>
-                            <span class="stat-value">0</span>
+                            <span class="stat-value" id="profileWins">0</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-label">Процент побед:</span>
-                            <span class="stat-value">0%</span>
+                            <span class="stat-value" id="profileWinRate">0%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Очков:</span>
+                            <span class="stat-value" id="profilePoints">0</span>
                         </div>
                     </div>
                 </div>
@@ -204,14 +243,62 @@
                 <div class="achievements">
                     <h3>Достижения</h3>
                     <div class="achievements-list" id="achievementsList">
-                        <div class="achievement-item locked">
-                            <div class="achievement-icon">🏆</div>
-                            <div class="achievement-info">
-                                <div class="achievement-name">Первая победа</div>
-                                <div class="achievement-desc">Выиграть первую игру</div>
-                            </div>
+                        <!-- Достижения будут загружены динамически -->
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="action-btn" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Выйти</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Panel Tab -->
+            <div class="tab-content" id="admin">
+                <div class="admin-header">
+                    <h2><i class="fas fa-crown"></i> Админ-панель</h2>
+                    <p>Управление клубом</p>
+                </div>
+
+                <div class="admin-stats">
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalUsers">0</div>
+                            <div class="stat-label">Пользователей</div>
                         </div>
                     </div>
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalTournaments">0</div>
+                            <div class="stat-label">Турниров</div>
+                        </div>
+                    </div>
+                    <div class="admin-stat-card">
+                        <div class="stat-icon">🎮</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="activeGames">0</div>
+                            <div class="stat-label">Активных игр</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-actions">
+                    <button class="admin-btn" onclick="showAddTournamentModal()">
+                        <i class="fas fa-plus"></i>
+                        <span>Создать турнир</span>
+                    </button>
+                    <button class="admin-btn" onclick="showUsersList()">
+                        <i class="fas fa-users"></i>
+                        <span>Управление пользователями</span>
+                    </button>
+                    <button class="admin-btn" onclick="showTournamentsManagement()">
+                        <i class="fas fa-trophy"></i>
+                        <span>Управление турнирами</span>
+                    </button>
                 </div>
             </div>
         </main>
@@ -234,6 +321,96 @@
                 <i class="fas fa-user"></i>
                 <span>Профиль</span>
             </button>
+        </div>
+
+        <!-- Add Tournament Modal -->
+        <div class="modal" id="addTournamentModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Создать новый турнир</h2>
+                    <button class="close-btn" onclick="closeModal('addTournamentModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="tournamentName">Название турнира:</label>
+                        <input type="text" id="tournamentName" placeholder="Введите название турнира">
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentDate">Дата и время:</label>
+                        <input type="datetime-local" id="tournamentDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentDuration">Длительность (часы):</label>
+                        <input type="number" id="tournamentDuration" min="1" max="12" value="2">
+                    </div>
+                    <div class="form-group">
+                        <label for="maxPlayers">Максимум игроков:</label>
+                        <input type="number" id="maxPlayers" min="2" max="100" value="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentPrize">Призовой фонд (очки):</label>
+                        <input type="number" id="tournamentPrize" min="10" value="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="tournamentType">Тип игры:</label>
+                        <select id="tournamentType">
+                            <option value="texas">Техасский Холдем</option>
+                            <option value="omaha">Омаха</option>
+                            <option value="stud">Студ</option>
+                            <option value="mixed">Смешанные игры</option>
+                        </select>
+                    </div>
+                    <button class="create-btn" onclick="createTournament()">
+                        <i class="fas fa-plus"></i>
+                        <span>Создать турнир</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users List Modal -->
+        <div class="modal" id="usersListModal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2>Управление пользователями</h2>
+                    <button class="close-btn" onclick="closeModal('usersListModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="users-list" id="usersList">
+                        <!-- Список пользователей будет загружен динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tournament Participants Modal -->
+        <div class="modal" id="participantsModal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2>Участники турнира</h2>
+                    <button class="close-btn" onclick="closeModal('participantsModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="participants-list" id="participantsList">
+                        <!-- Список участников будет загружен динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Profile Modal -->
+        <div class="modal" id="userProfileModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Профиль игрока</h2>
+                    <button class="close-btn" onclick="closeModal('userProfileModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="user-profile-details" id="userProfileDetails">
+                        <!-- Детали профиля будут загружены динамически -->
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
