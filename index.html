@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Club - Telegram Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-spade"></i>
+                    <span>Poker Club</span>
+                </div>
+                <div class="user-profile" id="userProfile">
+                    <div class="user-avatar" id="userAvatar">👤</div>
+                    <div class="user-info">
+                        <div class="user-name" id="userName">Загрузка...</div>
+                        <div class="user-rank" id="userRank">Новичок</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-tab" data-tab="tournaments">
+                <i class="fas fa-trophy"></i>
+                <span>Турниры</span>
+            </button>
+            <button class="nav-tab" data-tab="rating">
+                <i class="fas fa-chart-line"></i>
+                <span>Рейтинг</span>
+            </button>
+            <button class="nav-tab" data-tab="profile">
+                <i class="fas fa-user"></i>
+                <span>Профиль</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Home Tab -->
+            <div class="tab-content active" id="home">
+                <div class="welcome-card">
+                    <h2>Добро пожаловать в Poker Club! 🃏</h2>
+                    <p>Твое место для игры в покер без денег</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalWins">0</div>
+                            <div class="stat-label">Побед</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalGames">0</div>
+                            <div class="stat-label">Игр</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="currentRank">1</div>
+                            <div class="stat-label">Ранг</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>Быстрые действия</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn" id="joinTournament">
+                            <i class="fas fa-play"></i>
+                            <span>Присоединиться к турниру</span>
+                        </button>
+                        <button class="action-btn" id="viewRating">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Посмотреть рейтинг</span>
+                        </button>
+                        <button class="action-btn" id="viewAchievements">
+                            <i class="fas fa-medal"></i>
+                            <span>Достижения</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Последняя активность</h3>
+                    <div class="activity-list" id="activityList">
+                        <div class="activity-item">
+                            <div class="activity-icon">🎯</div>
+                            <div class="activity-text">Добро пожаловать в клуб!</div>
+                            <div class="activity-time">Сейчас</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tournaments Tab -->
+            <div class="tab-content" id="tournaments">
+                <div class="section-header">
+                    <h2>Турниры</h2>
+                    <button class="btn-refresh" id="refreshTournaments">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+
+                <div class="tournament-filters">
+                    <button class="filter-btn active" data-filter="all">Все</button>
+                    <button class="filter-btn" data-filter="active">Активные</button>
+                    <button class="filter-btn" data-filter="upcoming">Предстоящие</button>
+                    <button class="filter-btn" data-filter="finished">Завершенные</button>
+                </div>
+
+                <div class="tournaments-list" id="tournamentsList">
+                    <div class="tournament-card">
+                        <div class="tournament-header">
+                            <h3>Ежедневный турнир</h3>
+                            <span class="tournament-status active">Активен</span>
+                        </div>
+                        <div class="tournament-info">
+                            <div class="info-item">
+                                <i class="fas fa-clock"></i>
+                                <span>19:00 - 21:00</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-users"></i>
+                                <span>12/20 игроков</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-trophy"></i>
+                                <span>Приз: 100 очков</span>
+                            </div>
+                        </div>
+                        <button class="btn-join">Присоединиться</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rating Tab -->
+            <div class="tab-content" id="rating">
+                <div class="section-header">
+                    <h2>Рейтинг игроков</h2>
+                    <div class="rating-period">
+                        <button class="period-btn active" data-period="month">Месяц</button>
+                        <button class="period-btn" data-period="all">Все время</button>
+                    </div>
+                </div>
+
+                <div class="rating-list" id="ratingList">
+                    <div class="rating-item">
+                        <div class="rank">1</div>
+                        <div class="player-info">
+                            <div class="player-name">Алексей П.</div>
+                            <div class="player-stats">2450 очков</div>
+                        </div>
+                        <div class="player-avatar">👑</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div class="tab-content" id="profile">
+                <div class="profile-header">
+                    <div class="profile-avatar" id="profileAvatar">👤</div>
+                    <div class="profile-info">
+                        <h2 id="profileName">Игрок</h2>
+                        <p id="profileRank">Ранг: Новичок</p>
+                    </div>
+                </div>
+
+                <div class="profile-stats">
+                    <h3>Статистика</h3>
+                    <div class="stats-list">
+                        <div class="stat-item">
+                            <span class="stat-label">Игр сыграно:</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Побед:</span>
+                            <span class="stat-value">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Процент побед:</span>
+                            <span class="stat-value">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="achievements">
+                    <h3>Достижения</h3>
+                    <div class="achievements-list" id="achievementsList">
+                        <div class="achievement-item locked">
+                            <div class="achievement-icon">🏆</div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">Первая победа</div>
+                                <div class="achievement-desc">Выиграть первую игру</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <button class="nav-item active" data-tab="home">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-item" data-tab="tournaments">
+                <i class="fas fa-trophy"></i>
+                <span>Турниры</span>
+            </button>
+            <button class="nav-item" data-tab="rating">
+                <i class="fas fa-chart-line"></i>
+                <span>Рейтинг</span>
+            </button>
+            <button class="nav-item" data-tab="profile">
+                <i class="fas fa-user"></i>
+                <span>Профиль</span>
+            </button>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
