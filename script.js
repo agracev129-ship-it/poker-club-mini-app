@@ -28,6 +28,8 @@ const ADMIN_TELEGRAM_ID = 609464085; // Твой Telegram ID
 const Storage = {
     save: (key, data) => {
         localStorage.setItem(`pokerClub_${key}`, JSON.stringify(data));
+        // Синхронизируем с "сервером" (в реальном приложении это был бы API)
+        syncWithServer(key, data);
     },
     load: (key, defaultValue = null) => {
         const data = localStorage.getItem(`pokerClub_${key}`);
@@ -38,15 +40,102 @@ const Storage = {
     }
 };
 
+// Система синхронизации данных
+const DataSync = {
+    // В реальном приложении здесь был бы API запрос
+    syncWithServer: (key, data) => {
+        // Сохраняем данные в глобальном объекте для демонстрации
+        if (!window.PokerClubGlobalData) {
+            window.PokerClubGlobalData = {};
+        }
+        window.PokerClubGlobalData[key] = data;
+        console.log(`Данные синхронизированы: ${key}`, data);
+    },
+    
+    // Получение данных с "сервера"
+    getFromServer: (key) => {
+        if (window.PokerClubGlobalData && window.PokerClubGlobalData[key]) {
+            return window.PokerClubGlobalData[key];
+        }
+        return null;
+    },
+    
+    // Объединение локальных и серверных данных
+    mergeData: (localData, serverData) => {
+        if (!serverData) return localData;
+        if (!localData) return serverData;
+        
+        // Для пользователей - объединяем массивы и убираем дубликаты
+        if (Array.isArray(localData) && Array.isArray(serverData)) {
+            const merged = [...localData];
+            serverData.forEach(serverItem => {
+                const exists = merged.find(localItem => 
+                    localItem.telegramId === serverItem.telegramId
+                );
+                if (!exists) {
+                    merged.push(serverItem);
+                }
+            });
+            return merged;
+        }
+        
+        // Для других данных - приоритет серверу
+        return serverData;
+    }
+};
+
+// Функция синхронизации
+function syncWithServer(key, data) {
+    DataSync.syncWithServer(key, data);
+}
+
 // Инициализация приложения
 function initApp() {
     tg.expand();
     tg.enableClosingConfirmation();
     appData.user = tg.initDataUnsafe.user;
+    
+    // Миграция данных для старых пользователей
+    migrateOldData();
+    
     initializeData();
     setupEventListeners();
     checkAuthentication();
     console.log("Poker Club Mini App инициализирован");
+}
+
+// Миграция данных для старых пользователей
+function migrateOldData() {
+    const currentUser = Storage.load('currentUser');
+    if (currentUser && !currentUser.telegramUsername) {
+        // Добавляем недостающие поля для старых пользователей
+        currentUser.telegramUsername = appData.user?.username || null;
+        currentUser.avatar = currentUser.avatar || '👤';
+        currentUser.telegramAvatarUrl = currentUser.telegramAvatarUrl || null;
+        
+        Storage.save('currentUser', currentUser);
+        console.log('Данные пользователя мигрированы');
+    }
+    
+    // Обновляем список зарегистрированных пользователей
+    const registeredUsers = Storage.load('registeredUsers', []);
+    const updatedUsers = registeredUsers.map(user => {
+        if (!user.telegramUsername) {
+            user.telegramUsername = user.telegramId === appData.user?.id ? appData.user?.username : null;
+        }
+        if (!user.avatar) {
+            user.avatar = '👤';
+        }
+        if (!user.telegramAvatarUrl) {
+            user.telegramAvatarUrl = null;
+        }
+        return user;
+    });
+    
+    if (JSON.stringify(registeredUsers) !== JSON.stringify(updatedUsers)) {
+        Storage.save('registeredUsers', updatedUsers);
+        console.log('Список пользователей обновлен');
+    }
 }
 
 // Проверка авторизации
@@ -216,13 +305,34 @@ function loadAllData() {
 
 // Инициализация данных
 function initializeData() {
-    appData.registeredUsers = Storage.load('registeredUsers', []);
-    appData.tournaments = Storage.load('tournaments', []);
-    appData.tournamentParticipants = Storage.load('tournamentParticipants', {});
+    // Загружаем локальные данные
+    const localUsers = Storage.load('registeredUsers', []);
+    const localTournaments = Storage.load('tournaments', []);
+    const localParticipants = Storage.load('tournamentParticipants', {});
+    
+    // Загружаем данные с "сервера"
+    const serverUsers = DataSync.getFromServer('registeredUsers');
+    const serverTournaments = DataSync.getFromServer('tournaments');
+    const serverParticipants = DataSync.getFromServer('tournamentParticipants');
+    
+    // Объединяем данные
+    appData.registeredUsers = DataSync.mergeData(localUsers, serverUsers);
+    appData.tournaments = DataSync.mergeData(localTournaments, serverTournaments);
+    appData.tournamentParticipants = serverParticipants || localParticipants;
+    
+    // Сохраняем объединенные данные локально
+    Storage.save('registeredUsers', appData.registeredUsers);
+    Storage.save('tournaments', appData.tournaments);
+    Storage.save('tournamentParticipants', appData.tournamentParticipants);
     
     if (appData.tournaments.length === 0) {
         createDefaultTournaments();
     }
+    
+    console.log('Данные инициализированы:', {
+        users: appData.registeredUsers.length,
+        tournaments: appData.tournaments.length
+    });
 }
 
 // Создание турниров по умолчанию
@@ -964,6 +1074,128 @@ function switchRatingPeriod(period) {
     loadRating();
 }
 
+// Принудительная синхронизация данных
+function forceDataSync() {
+    console.log('Принудительная синхронизация данных...');
+    
+    // Перезагружаем данные
+    initializeData();
+    
+    // Обновляем интерфейс
+    loadAllData();
+    
+    showAlert('Данные синхронизированы!');
+}
+
+// Функция для отладки - показать все данные
+function debugShowData() {
+    console.log('=== ОТЛАДКА ДАННЫХ ===');
+    console.log('Текущий пользователь:', appData.currentUser);
+    console.log('Зарегистрированные пользователи:', appData.registeredUsers);
+    console.log('Турниры:', appData.tournaments);
+    console.log('Глобальные данные:', window.PokerClubGlobalData);
+    console.log('========================');
+}
+
+// Создание демонстрационных данных для тестирования
+function createDemoData() {
+    if (!window.PokerClubGlobalData) {
+        window.PokerClubGlobalData = {};
+    }
+    
+    // Создаем демонстрационных пользователей
+    const demoUsers = [
+        {
+            telegramId: 111111111,
+            telegramName: "Алексей",
+            telegramUsername: "alexey_demo",
+            gameNickname: "PokerMaster",
+            preferredGame: "texas_holdem",
+            isAdmin: false,
+            stats: { totalWins: 15, totalGames: 25, currentRank: 3, points: 1250 },
+            registrationDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+            avatar: "🃏",
+            telegramAvatarUrl: null
+        },
+        {
+            telegramId: 222222222,
+            telegramName: "Мария",
+            telegramUsername: "maria_demo",
+            gameNickname: "QueenOfHearts",
+            preferredGame: "omaha",
+            isAdmin: false,
+            stats: { totalWins: 8, totalGames: 12, currentRank: 2, points: 800 },
+            registrationDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+            avatar: "👑",
+            telegramAvatarUrl: null
+        },
+        {
+            telegramId: 333333333,
+            telegramName: "Дмитрий",
+            telegramUsername: "dmitry_demo",
+            gameNickname: "BluffKing",
+            preferredGame: "texas_holdem",
+            isAdmin: false,
+            stats: { totalWins: 22, totalGames: 30, currentRank: 4, points: 1800 },
+            registrationDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+            avatar: "🎭",
+            telegramAvatarUrl: null
+        }
+    ];
+    
+    // Создаем демонстрационные турниры
+    const demoTournaments = [
+        {
+            id: 1,
+            name: "Еженедельный турнир",
+            date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+            maxPlayers: 8,
+            prize: 500,
+            status: "upcoming",
+            participants: [
+                {
+                    telegramId: 111111111,
+                    nickname: "PokerMaster",
+                    joinDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+                    avatar: "🃏",
+                    telegramAvatarUrl: null
+                },
+                {
+                    telegramId: 222222222,
+                    nickname: "QueenOfHearts",
+                    joinDate: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                    avatar: "👑",
+                    telegramAvatarUrl: null
+                }
+            ]
+        },
+        {
+            id: 2,
+            name: "Турнир новичков",
+            date: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+            maxPlayers: 6,
+            prize: 300,
+            status: "upcoming",
+            participants: [
+                {
+                    telegramId: 333333333,
+                    nickname: "BluffKing",
+                    joinDate: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
+                    avatar: "🎭",
+                    telegramAvatarUrl: null
+                }
+            ]
+        }
+    ];
+    
+    // Сохраняем демонстрационные данные
+    window.PokerClubGlobalData.registeredUsers = demoUsers;
+    window.PokerClubGlobalData.tournaments = demoTournaments;
+    
+    console.log('Демонстрационные данные созданы');
+    showAlert('Демонстрационные данные созданы! Теперь все пользователи будут видеть друг друга.');
+}
+
 // Экспорт функций для глобального использования
 window.joinTournament = joinTournament;
 window.switchTab = switchTab;
@@ -986,6 +1218,9 @@ window.saveAvatar = saveAvatar;
 window.finishTournament = finishTournament;
 window.switchRatingPeriod = switchRatingPeriod;
 window.showAllUsers = showAllUsers;
+window.forceDataSync = forceDataSync;
+window.debugShowData = debugShowData;
+window.createDemoData = createDemoData;
 
 // Экспорт функций для использования в других скриптах
 window.TelegramApp = {
