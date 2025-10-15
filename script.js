@@ -5,139 +5,92 @@ const API_BASE = 'http://localhost:3000/api';
 const API = {
     // Получить всех пользователей
     async getUsers() {
-        try {
-            const response = await fetch(`${API_BASE}/users`);
-            if (!response.ok) throw new Error('Ошибка загрузки пользователей');
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            // Fallback на localStorage
-            return Storage.load('registeredUsers', []);
-        }
+        const response = await fetch(`${API_BASE}/users`);
+        if (!response.ok) throw new Error('Ошибка загрузки пользователей');
+        return await response.json();
     },
 
     // Получить пользователя по Telegram ID
     async getUserByTelegramId(telegramId) {
-        try {
-            const response = await fetch(`${API_BASE}/users/telegram/${telegramId}`);
-            if (response.status === 404) return null;
-            if (!response.ok) throw new Error('Ошибка загрузки пользователя');
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            return null;
-        }
+        const response = await fetch(`${API_BASE}/users/telegram/${telegramId}`);
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error('Ошибка загрузки пользователя');
+        return await response.json();
     },
 
     // Создать пользователя
     async createUser(userData) {
-        try {
-            const response = await fetch(`${API_BASE}/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData)
-            });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Ошибка создания пользователя');
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
+        const response = await fetch(`${API_BASE}/users`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Ошибка создания пользователя');
         }
+        return await response.json();
     },
 
     // Обновить пользователя
     async updateUser(userId, userData) {
-        try {
-            const response = await fetch(`${API_BASE}/users/${userId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData)
-            });
-            if (!response.ok) throw new Error('Ошибка обновления пользователя');
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
+        const response = await fetch(`${API_BASE}/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+        if (!response.ok) throw new Error('Ошибка обновления пользователя');
+        return await response.json();
     },
 
     // Получить все турниры
     async getTournaments() {
-        try {
-            const response = await fetch(`${API_BASE}/tournaments`);
-            if (!response.ok) throw new Error('Ошибка загрузки турниров');
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            // Fallback на localStorage
-            return Storage.load('tournaments', []);
-        }
+        const response = await fetch(`${API_BASE}/tournaments`);
+        if (!response.ok) throw new Error('Ошибка загрузки турниров');
+        return await response.json();
     },
 
     // Создать турнир
     async createTournament(tournamentData) {
-        try {
-            const response = await fetch(`${API_BASE}/tournaments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(tournamentData)
-            });
-            if (!response.ok) throw new Error('Ошибка создания турнира');
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
+        const response = await fetch(`${API_BASE}/tournaments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tournamentData)
+        });
+        if (!response.ok) throw new Error('Ошибка создания турнира');
+        return await response.json();
     },
 
     // Присоединиться к турниру
     async joinTournament(tournamentId, userId) {
-        try {
-            const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/join`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId })
-            });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || 'Ошибка присоединения к турниру');
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
+        const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Ошибка присоединения к турниру');
         }
+        return await response.json();
     },
 
     // Обновить статус турнира
     async updateTournamentStatus(tournamentId, status) {
-        try {
-            const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-            if (!response.ok) throw new Error('Ошибка обновления статуса турнира');
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            throw error;
-        }
+        const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (!response.ok) throw new Error('Ошибка обновления статуса турнира');
+        return await response.json();
     },
 
     // Получить статистику
     async getStats() {
-        try {
-            const response = await fetch(`${API_BASE}/admin/stats`);
-            if (!response.ok) throw new Error('Ошибка загрузки статистики');
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            return { totalUsers: 0, totalTournaments: 0, activeGames: 0 };
-        }
+        const response = await fetch(`${API_BASE}/admin/stats`);
+        if (!response.ok) throw new Error('Ошибка загрузки статистики');
+        return await response.json();
     }
 };
 
@@ -152,27 +105,6 @@ let appData = {
 // ID администратора (замени на свой Telegram ID)
 const ADMIN_TELEGRAM_ID = "609464085";
 
-// Утилиты для работы с localStorage
-const Storage = {
-    save(key, data) {
-        try {
-            localStorage.setItem(key, JSON.stringify(data));
-        } catch (error) {
-            console.error('Ошибка сохранения в localStorage:', error);
-        }
-    },
-
-    load(key, defaultValue = null) {
-        try {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : defaultValue;
-        } catch (error) {
-            console.error('Ошибка загрузки из localStorage:', error);
-            return defaultValue;
-        }
-    }
-};
-
 // Инициализация приложения
 async function initApp() {
     try {
@@ -182,7 +114,7 @@ async function initApp() {
             window.Telegram.WebApp.expand();
         }
 
-        // Загружаем данные
+        // Загружаем данные с сервера
         await initializeData();
         
         // Проверяем аутентификацию
@@ -196,7 +128,7 @@ async function initApp() {
         console.log('Приложение инициализировано');
     } catch (error) {
         console.error('Ошибка инициализации:', error);
-        showError('Ошибка загрузки приложения');
+        showError('Ошибка загрузки приложения. Проверьте подключение к серверу.');
     }
 }
 
@@ -209,25 +141,13 @@ async function initializeData() {
         // Загружаем турниры с сервера
         appData.tournaments = await API.getTournaments();
         
-        // Сохраняем в localStorage для офлайн доступа
-        Storage.save('registeredUsers', appData.registeredUsers);
-        Storage.save('tournaments', appData.tournaments);
-        
         console.log('Данные загружены с сервера:', {
             users: appData.registeredUsers.length,
             tournaments: appData.tournaments.length
         });
     } catch (error) {
         console.error('Ошибка загрузки данных с сервера:', error);
-        
-        // Fallback на localStorage
-        appData.registeredUsers = Storage.load('registeredUsers', []);
-        appData.tournaments = Storage.load('tournaments', []);
-        
-        console.log('Используем данные из localStorage:', {
-            users: appData.registeredUsers.length,
-            tournaments: appData.tournaments.length
-        });
+        throw error; // Пробрасываем ошибку дальше
     }
 }
 
@@ -264,9 +184,6 @@ async function checkAuthentication() {
                 await API.updateUser(user.id, { telegramUsername: telegramUser.username });
                 user.telegramUsername = telegramUser.username;
             }
-            
-            Storage.save('currentUser', appData.currentUser);
-            Storage.save('isAdmin', appData.isAdmin);
         } else {
             // Пользователь не найден - показываем регистрацию
             showRegistrationModal();
@@ -354,10 +271,6 @@ async function registerUser() {
         appData.currentUser = newUser;
         appData.isAdmin = telegramUser.id.toString() === ADMIN_TELEGRAM_ID;
         
-        // Сохраняем в localStorage
-        Storage.save('currentUser', appData.currentUser);
-        Storage.save('isAdmin', appData.isAdmin);
-        
         // Перезагружаем данные с сервера
         await initializeData();
         
@@ -390,9 +303,6 @@ async function loginAsUser() {
         if (user) {
             appData.currentUser = user;
             appData.isAdmin = telegramId === ADMIN_TELEGRAM_ID;
-            
-            Storage.save('currentUser', appData.currentUser);
-            Storage.save('isAdmin', appData.isAdmin);
             
             closeModal('loginModal');
             loadUserData();
@@ -429,9 +339,6 @@ async function loginAsAdmin() {
         if (user) {
             appData.currentUser = user;
             appData.isAdmin = true;
-            
-            Storage.save('currentUser', appData.currentUser);
-            Storage.save('isAdmin', appData.isAdmin);
             
             closeModal('loginModal');
             loadUserData();
@@ -637,7 +544,6 @@ async function joinTournament(tournamentId) {
         
         // Перезагружаем турниры с сервера
         appData.tournaments = await API.getTournaments();
-        Storage.save('tournaments', appData.tournaments);
         
         renderTournaments();
         showSuccess('Вы присоединились к турниру!');
@@ -792,7 +698,6 @@ async function createTournament() {
         
         // Перезагружаем турниры с сервера
         appData.tournaments = await API.getTournaments();
-        Storage.save('tournaments', appData.tournaments);
         
         closeModal('addTournamentModal');
         renderTournaments();
@@ -819,7 +724,6 @@ async function finishTournament(tournamentId) {
         
         // Перезагружаем турниры с сервера
         appData.tournaments = await API.getTournaments();
-        Storage.save('tournaments', appData.tournaments);
         
         renderTournaments();
         showSuccess('Турнир завершен!');
@@ -964,7 +868,6 @@ async function saveAvatar() {
         await API.updateUser(appData.currentUser.id, { avatar: window.selectedAvatar });
         
         appData.currentUser.avatar = window.selectedAvatar;
-        Storage.save('currentUser', appData.currentUser);
         
         closeModal('avatarModal');
         loadUserData();
@@ -1009,7 +912,6 @@ async function editProfile() {
         
         appData.currentUser.gameNickname = gameNickname;
         appData.currentUser.preferredGame = preferredGame;
-        Storage.save('currentUser', appData.currentUser);
         
         closeModal('editProfileModal');
         loadUserData();
