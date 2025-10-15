@@ -21,7 +21,7 @@ let appData = {
 };
 
 // ID администратора (замени на свой Telegram ID)
-const ADMIN_TELEGRAM_ID = 123456789; // Замени на свой ID
+const ADMIN_TELEGRAM_ID = 609464085; // Твой Telegram ID
 
 // Система хранения данных
 const Storage = {
