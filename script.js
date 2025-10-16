@@ -2,7 +2,7 @@
 let tg = window.Telegram.WebApp;
 
 // Конфигурация API
-const API_BASE = 'https://poker-club-server.onrender.com/api';
+const API_BASE = 'https://poker-club-server-1.onrender.com/api';
 
 // API объект для взаимодействия с сервером
 const API = {
