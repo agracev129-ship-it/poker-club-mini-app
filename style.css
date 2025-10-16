@@ -219,35 +219,72 @@ input, textarea {
 }
 
 .action-btn {
-    background: white;
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
     border: none;
     padding: 18px 20px;
-    border-radius: 12px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     gap: 15px;
-    font-size: 16px;
+    font-size: 15px;
     color: var(--tg-theme-text-color, #2c3e50);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    border: 1px solid rgba(0,0,0,0.05);
+    border: 2px solid rgba(52, 152, 219, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(52, 152, 219, 0.1);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.action-btn:hover::before {
+    width: 300px;
+    height: 300px;
 }
 
 .action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 12px 35px rgba(52, 152, 219, 0.2);
+    border-color: rgba(52, 152, 219, 0.3);
+}
+
+.action-btn:active {
+    transform: translateY(-1px) scale(0.98);
 }
 
 .action-btn i {
     color: #3498db;
-    font-size: 18px;
+    font-size: 24px;
     flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 .action-btn span {
     flex: 1;
     text-align: left;
+    font-weight: 600;
+    color: var(--tg-theme-text-color, #2c3e50);
+    position: relative;
+    z-index: 1;
 }
 
 /* Recent Activity */
@@ -949,36 +986,91 @@ input, textarea {
 .admin-stat-card {
     background: white;
     padding: 20px 15px;
-    border-radius: 12px;
+    border-radius: 16px;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    border: 2px solid rgba(52, 152, 219, 0.1);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 120px;
+    min-height: 130px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(52, 152, 219, 0.05), rgba(155, 89, 182, 0.05));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 30px rgba(52, 152, 219, 0.2);
+    border-color: rgba(52, 152, 219, 0.3);
+}
+
+.admin-stat-card:hover::before {
+    opacity: 1;
+}
+
+.admin-stat-card:active {
+    transform: translateY(-2px) scale(0.98);
 }
 
 .admin-stat-card .stat-icon {
-    font-size: 24px;
-    margin-bottom: 8px;
+    font-size: 36px;
+    margin-bottom: 12px;
     display: block;
+    position: relative;
+    z-index: 1;
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+.admin-stat-card .stat-info {
+    position: relative;
+    z-index: 1;
 }
 
 .admin-stat-card .stat-value {
-    font-size: 24px;
-    font-weight: bold;
-    color: var(--tg-theme-text-color, #2c3e50);
-    margin-bottom: 5px;
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #3498db, #9b59b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
     display: block;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
 }
 
 .admin-stat-card .stat-label {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--tg-theme-hint-color, #7f8c8d);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    font-weight: 600;
     display: block;
 }
 
@@ -1268,6 +1360,123 @@ input, textarea {
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(52, 152, 219, 0.6);
+    }
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Apply animations to elements */
+.stat-card {
+    animation: slideUp 0.5s ease-out;
+}
+
+.tournament-card {
+    animation: fadeIn 0.4s ease-out;
+}
+
+.rating-item {
+    animation: slideIn 0.3s ease-out;
+}
+
+.activity-item {
+    animation: slideIn 0.4s ease-out;
+}
+
+.achievement-card {
+    animation: scaleIn 0.3s ease-out;
+}
+
+.modal.show .modal-content {
+    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* User rank badge */
+.user-rank-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: glow 2s ease-in-out infinite;
+}
+
+.user-rank-badge .rank-icon {
+    font-size: 14px;
+}
+
+.user-rank-badge .rank-text {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* Стили для темной темы Telegram */

@@ -536,6 +536,10 @@ async function joinTournament(tournamentId) {
         
         const tournament = appData.tournaments.find(t => t.id === tournamentId);
         showAlert(`Вы присоединились к турниру "${tournament.name}"!`);
+        
+        // Добавляем активность
+        addActivity('🎯', `Вы зарегистрировались на турнир "${tournament.name}"`);
+        
         vibrate();
     } catch (error) {
         console.error('Ошибка присоединения к турниру:', error);
@@ -952,6 +956,89 @@ function switchRatingPeriod(period) {
     loadRating();
 }
 
+// Добавить активность в ленту
+function addActivity(icon, text) {
+    const activityList = document.getElementById('activityList');
+    const activityItem = document.createElement('div');
+    activityItem.className = 'activity-item';
+    activityItem.style.animation = 'slideIn 0.4s ease-out';
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    
+    activityItem.innerHTML = `
+        <div class="activity-icon">${icon}</div>
+        <div class="activity-text">${text}</div>
+        <div class="activity-time">${timeString}</div>
+    `;
+    
+    // Добавляем в начало списка
+    activityList.insertBefore(activityItem, activityList.firstChild);
+    
+    // Ограничиваем количество записей
+    while (activityList.children.length > 5) {
+        activityList.removeChild(activityList.lastChild);
+    }
+}
+
+// Показать активных игроков
+async function showActivePlayers() {
+    try {
+        const users = await API.getUsers();
+        const tournaments = await API.getTournaments();
+        
+        // Находим всех игроков, участвующих в активных турнирах
+        const activeTournaments = tournaments.filter(t => t.status === 'active');
+        const activePlayerIds = new Set();
+        
+        activeTournaments.forEach(tournament => {
+            tournament.participants.forEach(participant => {
+                activePlayerIds.add(participant.id);
+            });
+        });
+        
+        const activePlayers = users.filter(user => activePlayerIds.has(user.id));
+        
+        // Показываем модальное окно со списком
+        const modal = document.getElementById('usersListModal');
+        const modalTitle = modal.querySelector('.modal-header h2');
+        const usersList = document.getElementById('usersList');
+        
+        modalTitle.textContent = `Активные игроки (${activePlayers.length})`;
+        
+        if (activePlayers.length === 0) {
+            usersList.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: #7f8c8d;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">🎮</div>
+                    <p>Нет активных игроков</p>
+                    <p style="font-size: 14px; margin-top: 8px;">Игроки появятся здесь, когда присоединятся к турнирам</p>
+                </div>
+            `;
+        } else {
+            usersList.innerHTML = activePlayers.map((user, index) => `
+                <div class="user-item" onclick="showUserProfile(${user.id})" style="animation: fadeIn 0.3s ease-out ${index * 0.05}s both;">
+                    <div class="user-avatar">${user.avatar || user.telegramAvatarUrl || '👤'}</div>
+                    <div class="user-info">
+                        <div class="user-name">${user.gameNickname || user.telegramName}</div>
+                        <div class="user-stats">${user.stats.points} очков</div>
+                    </div>
+                    <div class="user-rank-badge">
+                        <div class="rank-icon">🎯</div>
+                        <div class="rank-text">Активен</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+        
+    } catch (error) {
+        console.error('Ошибка загрузки активных игроков:', error);
+        showAlert('Ошибка загрузки активных игроков');
+    }
+}
+
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     initApp();
@@ -987,6 +1074,8 @@ window.uploadAvatar = uploadAvatar;
 window.saveAvatar = saveAvatar;
 window.finishTournament = finishTournament;
 window.switchRatingPeriod = switchRatingPeriod;
+window.showActivePlayers = showActivePlayers;
+window.addActivity = addActivity;
 
 // Экспорт функций для использования в других скриптах
 window.TelegramApp = {
