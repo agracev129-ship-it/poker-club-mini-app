@@ -1,99 +1,3 @@
-// Конфигурация API
-const API_BASE = 'http://localhost:3000/api';
-
-// API объект для взаимодействия с сервером
-const API = {
-    // Получить всех пользователей
-    async getUsers() {
-        const response = await fetch(`${API_BASE}/users`);
-        if (!response.ok) throw new Error('Ошибка загрузки пользователей');
-        return await response.json();
-    },
-
-    // Получить пользователя по Telegram ID
-    async getUserByTelegramId(telegramId) {
-        const response = await fetch(`${API_BASE}/users/telegram/${telegramId}`);
-        if (response.status === 404) return null;
-        if (!response.ok) throw new Error('Ошибка загрузки пользователя');
-        return await response.json();
-    },
-
-    // Создать пользователя
-    async createUser(userData) {
-        const response = await fetch(`${API_BASE}/users`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Ошибка создания пользователя');
-        }
-        return await response.json();
-    },
-
-    // Обновить пользователя
-    async updateUser(userId, userData) {
-        const response = await fetch(`${API_BASE}/users/${userId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
-        if (!response.ok) throw new Error('Ошибка обновления пользователя');
-        return await response.json();
-    },
-
-    // Получить все турниры
-    async getTournaments() {
-        const response = await fetch(`${API_BASE}/tournaments`);
-        if (!response.ok) throw new Error('Ошибка загрузки турниров');
-        return await response.json();
-    },
-
-    // Создать турнир
-    async createTournament(tournamentData) {
-        const response = await fetch(`${API_BASE}/tournaments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tournamentData)
-        });
-        if (!response.ok) throw new Error('Ошибка создания турнира');
-        return await response.json();
-    },
-
-    // Присоединиться к турниру
-    async joinTournament(tournamentId, userId) {
-        const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/join`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId })
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Ошибка присоединения к турниру');
-        }
-        return await response.json();
-    },
-
-    // Обновить статус турнира
-    async updateTournamentStatus(tournamentId, status) {
-        const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
-        });
-        if (!response.ok) throw new Error('Ошибка обновления статуса турнира');
-        return await response.json();
-    },
-
-    // Получить статистику
-    async getStats() {
-        const response = await fetch(`${API_BASE}/admin/stats`);
-        if (!response.ok) throw new Error('Ошибка загрузки статистики');
-        return await response.json();
-    }
-};
-
 // Глобальные переменные
 let appData = {
     registeredUsers: [],
@@ -102,8 +6,125 @@ let appData = {
     isAdmin: false
 };
 
-// ID администратора (замени на свой Telegram ID)
+// ID администратора
 const ADMIN_TELEGRAM_ID = "609464085";
+
+// Telegram Cloud Storage для синхронизации данных
+const TelegramStorage = {
+    // Сохранить данные в Telegram Cloud Storage
+    async save(key, data) {
+        try {
+            const dataStr = JSON.stringify(data);
+            if (window.Telegram?.WebApp?.CloudStorage) {
+                await new Promise((resolve, reject) => {
+                    window.Telegram.WebApp.CloudStorage.setItem(key, dataStr, (error, success) => {
+                        if (error) reject(error);
+                        else resolve(success);
+                    });
+                });
+                console.log(`Saved to Telegram Cloud: ${key}`);
+            }
+        } catch (error) {
+            console.error('Error saving to Telegram Cloud:', error);
+        }
+    },
+
+    // Загрузить данные из Telegram Cloud Storage
+    async load(key, defaultValue = null) {
+        try {
+            if (window.Telegram?.WebApp?.CloudStorage) {
+                return await new Promise((resolve) => {
+                    window.Telegram.WebApp.CloudStorage.getItem(key, (error, value) => {
+                        if (error || !value) {
+                            resolve(defaultValue);
+                        } else {
+                            try {
+                                resolve(JSON.parse(value));
+                            } catch (e) {
+                                resolve(defaultValue);
+                            }
+                        }
+                    });
+                });
+            }
+            return defaultValue;
+        } catch (error) {
+            console.error('Error loading from Telegram Cloud:', error);
+            return defaultValue;
+        }
+    },
+
+    // Получить все ключи
+    async getKeys() {
+        try {
+            if (window.Telegram?.WebApp?.CloudStorage) {
+                return await new Promise((resolve) => {
+                    window.Telegram.WebApp.CloudStorage.getKeys((error, keys) => {
+                        if (error) resolve([]);
+                        else resolve(keys || []);
+                    });
+                });
+            }
+            return [];
+        } catch (error) {
+            console.error('Error getting keys:', error);
+            return [];
+        }
+    }
+};
+
+// Утилита для работы с общими данными
+const SharedData = {
+    // Загрузить всех пользователей
+    async loadUsers() {
+        const keys = await TelegramStorage.getKeys();
+        const userKeys = keys.filter(k => k.startsWith('user_'));
+        const users = [];
+        
+        for (const key of userKeys) {
+            const user = await TelegramStorage.load(key);
+            if (user) users.push(user);
+        }
+        
+        return users;
+    },
+
+    // Сохранить пользователя
+    async saveUser(user) {
+        await TelegramStorage.save(`user_${user.telegramId}`, user);
+        console.log('User saved:', user.gameNickname);
+    },
+
+    // Получить пользователя по Telegram ID
+    async getUserByTelegramId(telegramId) {
+        return await TelegramStorage.load(`user_${telegramId}`);
+    },
+
+    // Загрузить все турниры
+    async loadTournaments() {
+        const keys = await TelegramStorage.getKeys();
+        const tournamentKeys = keys.filter(k => k.startsWith('tournament_'));
+        const tournaments = [];
+        
+        for (const key of tournamentKeys) {
+            const tournament = await TelegramStorage.load(key);
+            if (tournament) tournaments.push(tournament);
+        }
+        
+        return tournaments.sort((a, b) => new Date(a.date) - new Date(b.date));
+    },
+
+    // Сохранить турнир
+    async saveTournament(tournament) {
+        await TelegramStorage.save(`tournament_${tournament.id}`, tournament);
+        console.log('Tournament saved:', tournament.name);
+    },
+
+    // Получить турнир по ID
+    async getTournamentById(tournamentId) {
+        return await TelegramStorage.load(`tournament_${tournamentId}`);
+    }
+};
 
 // Инициализация приложения
 async function initApp() {
@@ -114,7 +135,7 @@ async function initApp() {
             window.Telegram.WebApp.expand();
         }
 
-        // Загружаем данные с сервера
+        // Загружаем данные
         await initializeData();
         
         // Проверяем аутентификацию
@@ -128,26 +149,27 @@ async function initApp() {
         console.log('Приложение инициализировано');
     } catch (error) {
         console.error('Ошибка инициализации:', error);
-        showError('Ошибка загрузки приложения. Проверьте подключение к серверу.');
+        showError('Ошибка загрузки приложения');
     }
 }
 
 // Инициализация данных
 async function initializeData() {
     try {
-        // Загружаем пользователей с сервера
-        appData.registeredUsers = await API.getUsers();
+        // Загружаем пользователей
+        appData.registeredUsers = await SharedData.loadUsers();
         
-        // Загружаем турниры с сервера
-        appData.tournaments = await API.getTournaments();
+        // Загружаем турниры
+        appData.tournaments = await SharedData.loadTournaments();
         
-        console.log('Данные загружены с сервера:', {
+        console.log('Данные загружены:', {
             users: appData.registeredUsers.length,
             tournaments: appData.tournaments.length
         });
     } catch (error) {
-        console.error('Ошибка загрузки данных с сервера:', error);
-        throw error; // Пробрасываем ошибку дальше
+        console.error('Ошибка загрузки данных:', error);
+        appData.registeredUsers = [];
+        appData.tournaments = [];
     }
 }
 
@@ -163,8 +185,8 @@ async function checkAuthentication() {
 
         const telegramId = telegramUser.id.toString();
         
-        // Проверяем, есть ли пользователь на сервере
-        const user = await API.getUserByTelegramId(telegramId);
+        // Проверяем, есть ли пользователь
+        const user = await SharedData.getUserByTelegramId(telegramId);
         
         if (user) {
             // Пользователь найден
@@ -172,17 +194,21 @@ async function checkAuthentication() {
             appData.isAdmin = telegramId === ADMIN_TELEGRAM_ID;
             
             // Обновляем данные пользователя из Telegram
-            if (telegramUser.first_name || telegramUser.last_name) {
-                const telegramName = `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim();
-                if (telegramName !== user.telegramName) {
-                    await API.updateUser(user.id, { telegramName });
-                    user.telegramName = telegramName;
-                }
+            let updated = false;
+            const telegramName = `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim();
+            if (telegramName && telegramName !== user.telegramName) {
+                user.telegramName = telegramName;
+                updated = true;
             }
             
             if (telegramUser.username && telegramUser.username !== user.telegramUsername) {
-                await API.updateUser(user.id, { telegramUsername: telegramUser.username });
                 user.telegramUsername = telegramUser.username;
+                updated = true;
+            }
+            
+            if (updated) {
+                await SharedData.saveUser(user);
+                appData.currentUser = user;
             }
         } else {
             // Пользователь не найден - показываем регистрацию
@@ -210,31 +236,7 @@ function showLoginModal() {
 
 // Показать модальное окно регистрации
 function showRegistrationModal() {
-    // Пытаемся получить данные из Telegram
-    requestTelegramData();
     showModal('registrationModal');
-}
-
-// Запрос данных из Telegram
-function requestTelegramData() {
-    try {
-        const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        
-        if (telegramUser) {
-            // Пытаемся получить аватар из Telegram
-            if (telegramUser.photo_url) {
-                console.log('Telegram avatar URL:', telegramUser.photo_url);
-            }
-            
-            // Пытаемся запросить доступ к контактам
-            if (window.Telegram?.WebApp?.requestContact) {
-                // Это можно использовать для получения дополнительных данных
-                console.log('Telegram contact request available');
-            }
-        }
-    } catch (error) {
-        console.error('Ошибка получения данных Telegram:', error);
-    }
 }
 
 // Регистрация пользователя
@@ -255,23 +257,38 @@ async function registerUser() {
             return;
         }
 
-        const userData = {
+        // Проверяем уникальность никнейма
+        const existingUser = appData.registeredUsers.find(u => u.gameNickname === gameNickname);
+        if (existingUser) {
+            showError('Этот никнейм уже занят');
+            return;
+        }
+
+        const newUser = {
+            id: Date.now(),
             telegramId: telegramUser.id,
             telegramName: `${telegramUser.first_name || ''} ${telegramUser.last_name || ''}`.trim(),
             telegramUsername: telegramUser.username || null,
             gameNickname: gameNickname,
             preferredGame: preferredGame,
             avatar: '👤',
-            telegramAvatarUrl: telegramUser.photo_url || null
+            telegramAvatarUrl: telegramUser.photo_url || null,
+            stats: {
+                totalWins: 0,
+                totalGames: 0,
+                points: 0,
+                currentRank: 1
+            },
+            registrationDate: new Date().toISOString()
         };
 
-        // Создаем пользователя на сервере
-        const newUser = await API.createUser(userData);
+        // Сохраняем пользователя
+        await SharedData.saveUser(newUser);
         
         appData.currentUser = newUser;
         appData.isAdmin = telegramUser.id.toString() === ADMIN_TELEGRAM_ID;
         
-        // Перезагружаем данные с сервера
+        // Перезагружаем данные
         await initializeData();
         
         closeModal('registrationModal');
@@ -298,7 +315,7 @@ async function loginAsUser() {
         }
 
         const telegramId = telegramUser.id.toString();
-        const user = await API.getUserByTelegramId(telegramId);
+        const user = await SharedData.getUserByTelegramId(telegramId);
         
         if (user) {
             appData.currentUser = user;
@@ -334,7 +351,7 @@ async function loginAsAdmin() {
             return;
         }
 
-        const user = await API.getUserByTelegramId(telegramId);
+        const user = await SharedData.getUserByTelegramId(telegramId);
         
         if (user) {
             appData.currentUser = user;
@@ -364,11 +381,7 @@ function loadUserData() {
     const profileStats = document.getElementById('profileStats');
 
     if (userAvatar) {
-        if (appData.currentUser.avatar === 'telegram' && appData.currentUser.telegramAvatarUrl) {
-            userAvatar.textContent = '📷';
-        } else {
-            userAvatar.textContent = appData.currentUser.avatar || '👤';
-        }
+        userAvatar.textContent = appData.currentUser.avatar || '👤';
     }
 
     if (userName) {
@@ -376,11 +389,7 @@ function loadUserData() {
     }
 
     if (profileAvatar) {
-        if (appData.currentUser.avatar === 'telegram' && appData.currentUser.telegramAvatarUrl) {
-            profileAvatar.textContent = '📷';
-        } else {
-            profileAvatar.textContent = appData.currentUser.avatar || '👤';
-        }
+        profileAvatar.textContent = appData.currentUser.avatar || '👤';
     }
 
     if (profileNickname) {
@@ -449,8 +458,8 @@ function renderTournaments() {
 
     tournamentsList.innerHTML = appData.tournaments.map(tournament => {
         const tournamentDate = new Date(tournament.date);
-        const isParticipant = tournament.participants?.some(p => p.id === appData.currentUser?.id);
-        const isFull = tournament.participants?.length >= tournament.max_players;
+        const isParticipant = tournament.participants?.some(p => p.telegramId === appData.currentUser?.telegramId);
+        const isFull = tournament.participants?.length >= tournament.maxPlayers;
         
         return `
             <div class="tournament-card">
@@ -465,7 +474,7 @@ function renderTournaments() {
                 <div class="tournament-details">
                     <div class="tournament-detail">
                         <div class="tournament-detail-label">Участники</div>
-                        <div class="tournament-detail-value">${tournament.participants?.length || 0}/${tournament.max_players}</div>
+                        <div class="tournament-detail-value">${tournament.participants?.length || 0}/${tournament.maxPlayers}</div>
                     </div>
                     <div class="tournament-detail">
                         <div class="tournament-detail-label">Приз</div>
@@ -540,10 +549,43 @@ async function joinTournament(tournamentId) {
             return;
         }
 
-        await API.joinTournament(tournamentId, appData.currentUser.id);
+        const tournament = await SharedData.getTournamentById(tournamentId);
+        if (!tournament) {
+            showError('Турнир не найден');
+            return;
+        }
+
+        if (!tournament.participants) {
+            tournament.participants = [];
+        }
+
+        // Проверяем, не участвует ли уже
+        const alreadyJoined = tournament.participants.some(p => p.telegramId === appData.currentUser.telegramId);
+        if (alreadyJoined) {
+            showError('Вы уже участвуете в этом турнире');
+            return;
+        }
+
+        // Проверяем, не заполнен ли турнир
+        if (tournament.participants.length >= tournament.maxPlayers) {
+            showError('Турнир заполнен');
+            return;
+        }
+
+        // Добавляем участника
+        tournament.participants.push({
+            id: appData.currentUser.id,
+            telegramId: appData.currentUser.telegramId,
+            nickname: appData.currentUser.gameNickname,
+            avatar: appData.currentUser.avatar,
+            joinDate: new Date().toISOString()
+        });
+
+        // Сохраняем турнир
+        await SharedData.saveTournament(tournament);
         
-        // Перезагружаем турниры с сервера
-        appData.tournaments = await API.getTournaments();
+        // Перезагружаем турниры
+        await initializeData();
         
         renderTournaments();
         showSuccess('Вы присоединились к турниру!');
@@ -568,7 +610,7 @@ function showTournamentParticipants(tournamentId) {
         participantsList.innerHTML = tournament.participants.map(participant => `
             <div class="participant-item" onclick="showUserProfile('${participant.nickname}')">
                 <div class="participant-avatar">
-                    ${participant.avatar === 'telegram' && participant.telegramAvatarUrl ? '📷' : (participant.avatar || '👤')}
+                    ${participant.avatar || '👤'}
                 </div>
                 <div class="participant-info">
                     <div class="participant-nickname">${participant.nickname}</div>
@@ -595,7 +637,7 @@ function showUserProfile(nickname) {
 
     userProfileContent.innerHTML = `
         <div class="user-profile-avatar">
-            ${user.avatar === 'telegram' && user.telegramAvatarUrl ? '📷' : (user.avatar || '👤')}
+            ${user.avatar || '👤'}
         </div>
         <div class="user-profile-info">
             <h4>${user.gameNickname}</h4>
@@ -650,7 +692,7 @@ async function showAllUsers() {
                     <div class="user-item" onclick="showUserProfile('${user.gameNickname}')">
                         <div class="user-rank-badge">#${index + 1}</div>
                         <div class="user-avatar-small">
-                            ${user.avatar === 'telegram' && user.telegramAvatarUrl ? '📷' : (user.avatar || '👤')}
+                            ${user.avatar || '👤'}
                         </div>
                         <div class="user-info">
                             <div class="user-nickname">${user.gameNickname}</div>
@@ -685,19 +727,23 @@ async function createTournament() {
             return;
         }
 
-        const tournamentData = {
+        const newTournament = {
+            id: Date.now(),
             name,
             date,
             duration,
             maxPlayers,
             prize,
-            type
+            type,
+            status: 'upcoming',
+            participants: []
         };
 
-        await API.createTournament(tournamentData);
+        // Сохраняем турнир
+        await SharedData.saveTournament(newTournament);
         
-        // Перезагружаем турниры с сервера
-        appData.tournaments = await API.getTournaments();
+        // Перезагружаем турниры
+        await initializeData();
         
         closeModal('addTournamentModal');
         renderTournaments();
@@ -720,10 +766,19 @@ async function finishTournament(tournamentId) {
             return;
         }
 
-        await API.updateTournamentStatus(tournamentId, 'finished');
+        const tournament = await SharedData.getTournamentById(tournamentId);
+        if (!tournament) {
+            showError('Турнир не найден');
+            return;
+        }
+
+        tournament.status = 'finished';
         
-        // Перезагружаем турниры с сервера
-        appData.tournaments = await API.getTournaments();
+        // Сохраняем турнир
+        await SharedData.saveTournament(tournament);
+        
+        // Перезагружаем турниры
+        await initializeData();
         
         renderTournaments();
         showSuccess('Турнир завершен!');
@@ -755,7 +810,7 @@ function loadRating() {
             <div class="rating-item" onclick="showUserProfile('${user.gameNickname}')">
                 <div class="rating-position">${index + 1}</div>
                 <div class="rating-avatar">
-                    ${user.avatar === 'telegram' && user.telegramAvatarUrl ? '📷' : (user.avatar || '👤')}
+                    ${user.avatar || '👤'}
                 </div>
                 <div class="rating-info">
                     <div class="rating-nickname">${user.gameNickname}</div>
@@ -790,17 +845,11 @@ function getRankName(points) {
 }
 
 // Загрузка статистики для админа
-async function loadRegisteredUsers() {
-    try {
-        const stats = await API.getStats();
-        
-        document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
-        document.getElementById('totalTournaments').textContent = stats.totalTournaments || 0;
-        document.getElementById('activeGames').textContent = stats.activeGames || 0;
-        
-    } catch (error) {
-        console.error('Ошибка загрузки статистики:', error);
-    }
+function loadRegisteredUsers() {
+    document.getElementById('totalUsers').textContent = appData.registeredUsers.length || 0;
+    document.getElementById('totalTournaments').textContent = appData.tournaments.length || 0;
+    const activeGames = appData.tournaments.filter(t => t.status === 'active').length;
+    document.getElementById('activeGames').textContent = activeGames;
 }
 
 // Показать модальное окно
@@ -848,7 +897,6 @@ function selectEmojiAvatar(emoji) {
 
 // Загрузить аватарку
 function uploadAvatar() {
-    // Здесь можно добавить логику загрузки фото
     showError('Загрузка фото пока не реализована');
 }
 
@@ -865,9 +913,10 @@ async function saveAvatar() {
             return;
         }
 
-        await API.updateUser(appData.currentUser.id, { avatar: window.selectedAvatar });
-        
         appData.currentUser.avatar = window.selectedAvatar;
+        
+        // Сохраняем пользователя
+        await SharedData.saveUser(appData.currentUser);
         
         closeModal('avatarModal');
         loadUserData();
@@ -905,13 +954,11 @@ async function editProfile() {
             return;
         }
 
-        await API.updateUser(appData.currentUser.id, { 
-            gameNickname, 
-            preferredGame 
-        });
-        
         appData.currentUser.gameNickname = gameNickname;
         appData.currentUser.preferredGame = preferredGame;
+        
+        // Сохраняем пользователя
+        await SharedData.saveUser(appData.currentUser);
         
         closeModal('editProfileModal');
         loadUserData();
@@ -921,16 +968,6 @@ async function editProfile() {
         console.error('Ошибка обновления профиля:', error);
         showError(error.message || 'Ошибка обновления профиля');
     }
-}
-
-// Показать профиль пользователя (клик по аватару)
-function showUserProfile() {
-    if (!appData.currentUser) {
-        showLoginModal();
-        return;
-    }
-    
-    showUserProfile(appData.currentUser.gameNickname);
 }
 
 // Переключение вкладок
@@ -1024,11 +1061,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Устаревшие функции (для совместимости)
 function forceDataSync() {
-    showSuccess('Данные синхронизированы с сервером!');
+    initializeData().then(() => {
+        showSuccess('Данные синхронизированы!');
+        loadTournaments();
+        loadRating();
+        loadUserData();
+    });
 }
 
 function createDemoData() {
-    showError('Демо-данные создаются автоматически на сервере');
+    showError('Демо-данные создаются автоматически');
 }
 
 function showUsersList() {
