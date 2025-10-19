@@ -911,12 +911,56 @@ function vibrate() {
 // Функция для изменения темы
 function applyTheme() {
     const body = document.body;
+    const isDark = tg.colorScheme === 'dark' || body.classList.contains('force-dark-theme');
     
-    if (tg.colorScheme === 'dark') {
+    if (isDark) {
         body.classList.add('dark-theme');
     } else {
         body.classList.remove('dark-theme');
     }
+    
+    // Обновляем иконку переключателя
+    updateThemeIcon();
+}
+
+// Обновить иконку темы
+function updateThemeIcon() {
+    const body = document.body;
+    const isDark = body.classList.contains('dark-theme');
+    
+    const themeIcon = document.getElementById('themeIcon');
+    const themeText = document.getElementById('themeText');
+    
+    if (themeIcon) {
+        themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    
+    if (themeText) {
+        themeText.textContent = isDark ? 'Светлая тема' : 'Тёмная тема';
+    }
+}
+
+// Переключить тему вручную
+function toggleTheme() {
+    const body = document.body;
+    
+    if (body.classList.contains('dark-theme')) {
+        body.classList.remove('dark-theme');
+        body.classList.remove('force-dark-theme');
+        localStorage.setItem('poker_club_theme', 'light');
+    } else {
+        body.classList.add('dark-theme');
+        body.classList.add('force-dark-theme');
+        localStorage.setItem('poker_club_theme', 'dark');
+    }
+    
+    updateThemeIcon();
+    
+    // Добавляем активность
+    const themeName = body.classList.contains('dark-theme') ? 'тёмную' : 'светлую';
+    addActivity('🎨', `Вы переключились на ${themeName} тему`);
+    
+    showAlert(`Тема изменена на ${themeName}`);
 }
 
 // Функции для работы с аватарками
@@ -1166,6 +1210,8 @@ window.finishTournament = finishTournament;
 window.switchRatingPeriod = switchRatingPeriod;
 window.showActivePlayers = showActivePlayers;
 window.addActivity = addActivity;
+window.toggleTheme = toggleTheme;
+window.updateThemeIcon = updateThemeIcon;
 
 // Экспорт функций для использования в других скриптах
 window.TelegramApp = {
