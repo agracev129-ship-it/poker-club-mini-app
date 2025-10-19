@@ -313,9 +313,18 @@ function loadUserData() {
         document.getElementById('profileNickname').style.display = 'block';
         
         // Обновляем аватарку
-        const avatar = appData.currentUser.avatar || '👤';
-        document.getElementById('profileAvatar').textContent = avatar;
-        document.getElementById('userAvatar').textContent = avatar;
+        const profileAvatarEl = document.getElementById('profileAvatar');
+        const userAvatarEl = document.getElementById('userAvatar');
+        
+        if (appData.currentUser.avatar === 'custom' && (appData.currentUser.customAvatarUrl || appData.currentUser.telegramAvatarUrl)) {
+            const avatarUrl = appData.currentUser.customAvatarUrl || appData.currentUser.telegramAvatarUrl;
+            profileAvatarEl.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            userAvatarEl.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+        } else {
+            const avatar = appData.currentUser.avatar || '👤';
+            profileAvatarEl.textContent = avatar;
+            userAvatarEl.textContent = avatar;
+        }
         
         // Обновляем статистику
         const stats = appData.currentUser.stats || {};
@@ -367,11 +376,39 @@ function loadRating() {
 
 // Загрузка достижений
 function loadAchievements() {
+    const stats = appData.currentUser?.stats || {};
+    const totalGames = stats.totalGames || 0;
+    const totalWins = stats.totalWins || 0;
+    const points = stats.points || 0;
+    
     appData.achievements = [
-        { id: 1, name: "Первая победа", desc: "Выиграть первую игру", icon: "🏆", unlocked: appData.currentUser?.stats?.totalWins > 0 },
-        { id: 2, name: "Стратег", desc: "Выиграть 10 игр", icon: "🧠", unlocked: appData.currentUser?.stats?.totalWins >= 10 },
-        { id: 3, name: "Чемпион", desc: "Занять 1 место в турнире", icon: "👑", unlocked: false },
-        { id: 4, name: "Настойчивый", desc: "Сыграть 50 игр", icon: "💪", unlocked: appData.currentUser?.stats?.totalGames >= 50 }
+        // Достижения за победы
+        { id: 1, name: "Первая победа", desc: "Выиграть первую игру", icon: "🏆", unlocked: totalWins >= 1 },
+        { id: 2, name: "Победитель", desc: "Выиграть 5 игр", icon: "🥇", unlocked: totalWins >= 5 },
+        { id: 3, name: "Стратег", desc: "Выиграть 10 игр", icon: "🧠", unlocked: totalWins >= 10 },
+        { id: 4, name: "Мастер игры", desc: "Выиграть 25 игр", icon: "⭐", unlocked: totalWins >= 25 },
+        { id: 5, name: "Легенда покера", desc: "Выиграть 50 игр", icon: "👑", unlocked: totalWins >= 50 },
+        
+        // Достижения за активность
+        { id: 6, name: "Новичок", desc: "Сыграть первую игру", icon: "🎯", unlocked: totalGames >= 1 },
+        { id: 7, name: "Любитель", desc: "Сыграть 10 игр", icon: "🎮", unlocked: totalGames >= 10 },
+        { id: 8, name: "Настойчивый", desc: "Сыграть 25 игр", icon: "💪", unlocked: totalGames >= 25 },
+        { id: 9, name: "Профессионал", desc: "Сыграть 50 игр", icon: "🎪", unlocked: totalGames >= 50 },
+        { id: 10, name: "Ветеран", desc: "Сыграть 100 игр", icon: "🎖️", unlocked: totalGames >= 100 },
+        
+        // Достижения за очки
+        { id: 11, name: "Первые очки", desc: "Набрать 100 очков", icon: "💎", unlocked: points >= 100 },
+        { id: 12, name: "Богач", desc: "Набрать 500 очков", icon: "💰", unlocked: points >= 500 },
+        { id: 13, name: "Миллионер", desc: "Набрать 1000 очков", icon: "💵", unlocked: points >= 1000 },
+        { id: 14, name: "Магнат", desc: "Набрать 5000 очков", icon: "🏰", unlocked: points >= 5000 },
+        
+        // Специальные достижения
+        { id: 15, name: "Социальный", desc: "Присоединиться к 5 турнирам", icon: "🤝", unlocked: false },
+        { id: 16, name: "Быстрый старт", desc: "Выиграть первую игру за 1 час после регистрации", icon: "⚡", unlocked: false },
+        { id: 17, name: "Удача новичка", desc: "Выиграть первые 3 игры подряд", icon: "🍀", unlocked: false },
+        { id: 18, name: "Непобедимый", desc: "Выиграть 10 игр подряд", icon: "🔥", unlocked: false },
+        { id: 19, name: "Король турниров", desc: "Занять 1 место в 3 турнирах", icon: "🎭", unlocked: false },
+        { id: 20, name: "Мастер блефа", desc: "Выиграть игру с минимальной рукой", icon: "🃏", unlocked: false }
     ];
     renderAchievements();
 }
@@ -903,20 +940,73 @@ function selectEmojiAvatar(emoji) {
 }
 
 function uploadAvatar() {
-    showAlert('Функция загрузки фото будет добавлена в следующих версиях');
+    // Создаём скрытый input для выбора файла
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    
+    input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // Проверяем размер файла (макс 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showAlert('Файл слишком большой! Максимум 5MB');
+            return;
+        }
+        
+        // Читаем файл как Data URL
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const avatarUrl = event.target.result;
+            
+            // Показываем превью
+            const preview = document.getElementById('avatarPreview');
+            preview.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+            
+            // Сохраняем для использования
+            appData.selectedAvatar = 'custom';
+            appData.selectedAvatarUrl = avatarUrl;
+            
+            showAlert('Фото загружено! Нажмите "Сохранить аватарку"');
+        };
+        reader.readAsDataURL(file);
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
 }
 
 async function saveAvatar() {
     try {
         if (appData.currentUser) {
-            appData.currentUser.avatar = appData.selectedAvatar;
-            
-            await API.updateUser(appData.currentUser.id, { avatar: appData.selectedAvatar });
+            // Проверяем тип аватарки
+            if (appData.selectedAvatar === 'custom' && appData.selectedAvatarUrl) {
+                // Сохраняем custom фото
+                appData.currentUser.avatar = 'custom';
+                appData.currentUser.customAvatarUrl = appData.selectedAvatarUrl;
+                
+                await API.updateUser(appData.currentUser.id, { 
+                    avatar: 'custom',
+                    telegramAvatarUrl: appData.selectedAvatarUrl // Сохраняем URL в БД
+                });
+            } else {
+                // Сохраняем эмодзи
+                appData.currentUser.avatar = appData.selectedAvatar;
+                
+                await API.updateUser(appData.currentUser.id, { avatar: appData.selectedAvatar });
+            }
             
             await initializeData();
             
             closeModal('avatarModal');
             loadUserData();
+            
+            // Добавляем активность
+            addActivity('🖼️', 'Вы обновили свою аватарку');
+            
             showAlert('Аватарка сохранена!');
         }
     } catch (error) {

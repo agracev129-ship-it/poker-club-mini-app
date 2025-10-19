@@ -155,14 +155,51 @@ input, textarea {
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
 }
 
+.welcome-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    display: inline-block;
+}
+
 .welcome-card h2 {
-    font-size: 22px;
-    margin-bottom: 10px;
+    font-size: 24px;
+    margin-bottom: 12px;
+    font-weight: 700;
 }
 
 .welcome-card p {
     opacity: 0.9;
     font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.welcome-subtitle {
+    font-size: 14px;
+    opacity: 0.8;
+    font-style: italic;
+}
+
+/* Section Title */
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--tg-theme-text-color, #2c3e50);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(52, 152, 219, 0.1);
+}
+
+.section-title i {
+    color: #3498db;
+    font-size: 20px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.stats-section {
+    margin-bottom: 25px;
 }
 
 /* Stats Grid */
@@ -170,7 +207,6 @@ input, textarea {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
-    margin-bottom: 25px;
 }
 
 .stat-card {
@@ -1454,6 +1490,86 @@ input, textarea {
 
 .modal.show .modal-content {
     animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Анимированные эмодзи (имитация Telegram) */
+.animated-emoji {
+    display: inline-block;
+    animation: emojiWiggle 1.5s ease-in-out infinite;
+}
+
+@keyframes emojiWiggle {
+    0%, 100% { 
+        transform: rotate(0deg) scale(1);
+    }
+    25% { 
+        transform: rotate(-10deg) scale(1.1);
+    }
+    75% { 
+        transform: rotate(10deg) scale(1.1);
+    }
+}
+
+.animated-emoji-bounce {
+    display: inline-block;
+    animation: emojiBounce 1s ease-in-out infinite;
+}
+
+@keyframes emojiBounce {
+    0%, 100% { 
+        transform: translateY(0) scale(1);
+    }
+    50% { 
+        transform: translateY(-10px) scale(1.2);
+    }
+}
+
+.animated-emoji-spin {
+    display: inline-block;
+    animation: emojiSpin 2s linear infinite;
+}
+
+@keyframes emojiSpin {
+    from { 
+        transform: rotate(0deg);
+    }
+    to { 
+        transform: rotate(360deg);
+    }
+}
+
+.animated-emoji-heartbeat {
+    display: inline-block;
+    animation: emojiHeartbeat 1.2s ease-in-out infinite;
+}
+
+@keyframes emojiHeartbeat {
+    0%, 100% { 
+        transform: scale(1);
+    }
+    10%, 30% { 
+        transform: scale(1.3);
+    }
+    20%, 40% { 
+        transform: scale(1.1);
+    }
+}
+
+.animated-emoji-shake {
+    display: inline-block;
+    animation: emojiShake 0.8s ease-in-out infinite;
+}
+
+@keyframes emojiShake {
+    0%, 100% { 
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% { 
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% { 
+        transform: translateX(5px);
+    }
 }
 
 /* User rank badge */

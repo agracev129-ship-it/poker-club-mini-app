@@ -7,6 +7,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link rel="stylesheet" href="style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
 </head>
 <body>
     <div class="app">
@@ -101,30 +102,38 @@
             <!-- Home Tab -->
             <div class="tab-content active" id="home">
                 <div class="welcome-card">
-                    <h2>Добро пожаловать в Poker Club! 🃏</h2>
+                    <div class="welcome-icon animated-emoji-bounce">🃏</div>
+                    <h2>Добро пожаловать в Poker Club!</h2>
                     <p>Твое место для игры в покер без денег</p>
+                    <p class="welcome-subtitle">Присоединяйся к турнирам, зарабатывай очки и становись легендой!</p>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">🏆</div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="totalWins">0</div>
-                            <div class="stat-label">Побед</div>
+                <div class="stats-section">
+                    <h3 class="section-title">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Твоя статистика</span>
+                    </h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">🏆</div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="totalWins">0</div>
+                                <div class="stat-label">Побед</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📊</div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="totalGames">0</div>
-                            <div class="stat-label">Игр</div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="totalGames">0</div>
+                                <div class="stat-label">Игр</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">⭐</div>
-                        <div class="stat-info">
-                            <div class="stat-value" id="currentRank">1</div>
-                            <div class="stat-label">Ранг</div>
+                        <div class="stat-card">
+                            <div class="stat-icon">⭐</div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="currentRank">1</div>
+                                <div class="stat-label">Ранг</div>
+                            </div>
                         </div>
                     </div>
                 </div>
