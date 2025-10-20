@@ -144,10 +144,21 @@ const API = {
 
     // Игры
     async getGames(tournamentId = null) {
-        const url = tournamentId ? `${API_BASE}/games?tournamentId=${tournamentId}` : `${API_BASE}/games`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Ошибка загрузки игр');
-        return await response.json();
+        try {
+            const url = tournamentId ? `${API_BASE}/games?tournamentId=${tournamentId}` : `${API_BASE}/games`;
+            console.log('🔍 Запрос к API:', url);
+            const response = await fetch(url);
+            console.log('📡 Ответ сервера:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('✅ Игры получены:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Ошибка API getGames:', error);
+            throw new Error(`Ошибка загрузки игр: ${error.message}`);
+        }
     },
 
     async getGame(gameId) {
@@ -302,21 +313,14 @@ async function initializeData() {
         console.log('🚀 Начинаю инициализацию данных...');
         console.log('🌐 API_BASE:', API_BASE);
         
-        // Загружаем пользователей с сервера
-        console.log('👥 Загружаю пользователей...');
-        appData.registeredUsers = await API.getUsers();
+        // Инициализируем пустые массивы
+        appData.registeredUsers = [];
+        appData.tournaments = [];
         
-        // Загружаем турниры с сервера (новая схема)
-        console.log('🏆 Загружаю турниры...');
-        appData.tournaments = await API.getBigTournaments();
-        
-        console.log('✅ Данные загружены с сервера:', {
-            users: appData.registeredUsers.length,
-            tournaments: appData.tournaments.length
-        });
+        console.log('✅ Данные инициализированы (загрузка по требованию)');
     } catch (error) {
-        console.error('❌ Ошибка загрузки данных с сервера:', error);
-        showAlert(`Ошибка подключения к серверу: ${error.message}`);
+        console.error('❌ Ошибка инициализации:', error);
+        showAlert(`Ошибка инициализации: ${error.message}`);
     }
 }
 
@@ -521,9 +525,18 @@ function loadUserData() {
 }
 
 // Загрузка турниров
-function loadTournaments() {
-    updateTournamentStatuses();
-    renderTournaments();
+async function loadTournaments() {
+    try {
+        console.log('🏆 Загружаю турниры с сервера...');
+        appData.tournaments = await API.getBigTournaments();
+        console.log('✅ Турниры загружены:', appData.tournaments.length);
+        
+        updateTournamentStatuses();
+        renderTournaments();
+    } catch (error) {
+        console.error('❌ Ошибка загрузки турниров:', error);
+        showAlert(`Ошибка загрузки турниров: ${error.message}`);
+    }
 }
 
 // Обновление статусов турниров
@@ -1425,11 +1438,13 @@ window.updateThemeIcon = updateThemeIcon;
 // Загрузка игр
 async function loadGames() {
     try {
+        console.log('🎮 Загружаю игры с сервера...');
         const games = await API.getGames();
+        console.log('✅ Игры загружены:', games.length);
         displayGames(games);
         loadMyTournamentStanding();
     } catch (error) {
-        console.error('Ошибка загрузки игр:', error);
+        console.error('❌ Ошибка загрузки игр:', error);
         showAlert('Ошибка загрузки игр: ' + error.message);
     }
 }
