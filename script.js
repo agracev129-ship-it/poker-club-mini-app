@@ -341,6 +341,7 @@ async function initApp() {
     console.log('🚀 Инициализация приложения...');
     
     if (tg) {
+        console.log('📱 Telegram WebApp найден');
         tg.expand();
         tg.enableClosingConfirmation();
         appData.user = tg.initDataUnsafe.user;
@@ -349,8 +350,11 @@ async function initApp() {
         console.warn('⚠️ Telegram WebApp не найден, работаем в режиме браузера');
     }
     
+    console.log('📊 Инициализирую данные...');
     await initializeData();
+    console.log('🎯 Настраиваю обработчики событий...');
     setupEventListeners();
+    console.log('🔐 Проверяю аутентификацию...');
     await checkAuthentication();
     console.log("✅ Poker Club Mini App инициализирован");
 }
@@ -382,27 +386,37 @@ async function initializeData() {
 // Проверка авторизации
 async function checkAuthentication() {
     try {
+        console.log('🔐 Проверяю аутентификацию...');
+        console.log('👤 appData.user:', appData.user);
+        
         if (!appData.user) {
+            console.log('❌ Пользователь не найден, показываю модальное окно входа');
             showLoginModal();
             return;
         }
 
         const telegramId = appData.user.id.toString();
+        console.log('🆔 Telegram ID:', telegramId);
         
         // Проверяем, есть ли пользователь на сервере
+        console.log('🔍 Ищу пользователя на сервере...');
         const user = await API.getUserByTelegramId(telegramId);
+        console.log('👤 Найденный пользователь:', user);
         
         if (user) {
             appData.currentUser = user;
             appData.isLoggedIn = true;
             appData.isAdmin = parseInt(telegramId) === ADMIN_TELEGRAM_ID;
-            loadAllData();
+            console.log('✅ Пользователь авторизован, загружаю данные...');
+            await loadAllData();
             updateUserInterface();
+            console.log('✅ Интерфейс обновлён');
         } else {
+            console.log('❌ Пользователь не найден на сервере, показываю модальное окно входа');
             showLoginModal();
         }
     } catch (error) {
-        console.error('Ошибка проверки аутентификации:', error);
+        console.error('❌ Ошибка проверки аутентификации:', error);
         showLoginModal();
     }
 }
@@ -533,10 +547,10 @@ async function registerUser() {
 async function loadAllData() {
     await initializeData(); // Перезагружаем с сервера
     await loadUserData();
-    loadTournaments();
+    await loadTournaments();
     loadRating();
     loadAchievements();
-    loadRegisteredUsers();
+    await loadRegisteredUsers();
 }
 
 // Загрузка данных пользователя
