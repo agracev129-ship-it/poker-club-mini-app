@@ -532,7 +532,7 @@ async function registerUser() {
 // Загрузка всех данных
 async function loadAllData() {
     await initializeData(); // Перезагружаем с сервера
-    loadUserData();
+    await loadUserData();
     loadTournaments();
     loadRating();
     loadAchievements();
@@ -698,8 +698,8 @@ function updateNavigation() {
         adminTab.className = 'nav-item';
         adminTab.setAttribute('data-tab', 'admin');
         adminTab.innerHTML = '<i class="fas fa-crown"></i><span>Админ</span>';
-        adminTab.addEventListener('click', function() {
-            switchTab('admin');
+        adminTab.addEventListener('click', async function() {
+            await switchTab('admin');
         });
         bottomNav.appendChild(adminTab);
     }
@@ -1013,7 +1013,7 @@ async function showUsersList() {
 
 function showTournamentsManagement() {
     if (!appData.isAdmin) return;
-    switchTab('tournaments');
+    await switchTab('tournaments');
 }
 
 // Утилиты
@@ -1062,7 +1062,7 @@ function closeModal(modalId) {
 }
 
 // Переключение табов
-function switchTab(tabName) {
+async function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -1079,7 +1079,7 @@ function switchTab(tabName) {
     // Загружаем данные для активной вкладки
     switch(tabName) {
         case 'home':
-            loadUserData();
+            await loadUserData();
             break;
         case 'games':
             loadGames();
@@ -1091,7 +1091,7 @@ function switchTab(tabName) {
             loadRating();
             break;
         case 'profile':
-            loadUserData();
+            await loadUserData();
             break;
         case 'admin':
             loadAdminData();
@@ -1111,9 +1111,9 @@ function logout() {
 function setupEventListeners() {
     // Навигация по табам
     document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', function() {
+        item.addEventListener('click', async function() {
             const tab = this.getAttribute('data-tab');
-            switchTab(tab);
+            await switchTab(tab);
         });
     });
     
@@ -1127,18 +1127,18 @@ function setupEventListeners() {
     });
     
     // Быстрые действия
-    document.getElementById('joinTournament')?.addEventListener('click', function() {
-        switchTab('tournaments');
+    document.getElementById('joinTournament')?.addEventListener('click', async function() {
+        await switchTab('tournaments');
         vibrate();
     });
     
-    document.getElementById('viewRating')?.addEventListener('click', function() {
-        switchTab('rating');
+    document.getElementById('viewRating')?.addEventListener('click', async function() {
+        await switchTab('rating');
         vibrate();
     });
     
-    document.getElementById('viewAchievements')?.addEventListener('click', function() {
-        switchTab('profile');
+    document.getElementById('viewAchievements')?.addEventListener('click', async function() {
+        await switchTab('profile');
         vibrate();
     });
     
@@ -1322,7 +1322,7 @@ async function saveAvatar() {
             await initializeData();
             
             closeModal('avatarModal');
-            loadUserData();
+            await loadUserData();
             
             // Добавляем активность
             addActivity('🖼️', 'Вы обновили свою аватарку');
