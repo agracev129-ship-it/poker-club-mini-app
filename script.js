@@ -343,8 +343,12 @@ async function initApp() {
     
     if (tg) {
         console.log('📱 Telegram WebApp найден');
-        tg.expand();
-        tg.enableClosingConfirmation();
+        try {
+            tg.expand();
+            tg.enableClosingConfirmation();
+        } catch (error) {
+            console.error('❌ Ошибка инициализации Telegram WebApp:', error);
+        }
         appData.user = tg.initDataUnsafe.user;
         console.log('👤 Пользователь Telegram:', appData.user);
     } else {
@@ -1255,18 +1259,29 @@ function filterTournaments(filter) {
 // Функция для показа уведомлений
 function showAlert(message) {
     console.log('🚨 Alert:', message);
-    if (tg && tg.showAlert) {
-        tg.showAlert(message);
-    } else {
-        // Fallback для браузера
+    try {
+        if (tg && tg.showAlert) {
+            tg.showAlert(message);
+        } else {
+            // Fallback для браузера
+            alert(message);
+        }
+    } catch (error) {
+        console.error('❌ Ошибка показа alert:', error);
+        // Fallback для браузера при ошибке Telegram API
         alert(message);
     }
 }
 
 // Функция для вибрации
 function vibrate() {
-    if (tg && tg.HapticFeedback) {
-        tg.HapticFeedback.impactOccurred('medium');
+    try {
+        if (tg && tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+    } catch (error) {
+        console.error('❌ Ошибка вибрации:', error);
+        // Вибрация не критична, просто игнорируем ошибку
     }
 }
 
