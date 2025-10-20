@@ -559,14 +559,18 @@ function loadUserData() {
 async function loadTournaments() {
     try {
         console.log('🏆 Загружаю турниры с сервера...');
-        appData.tournaments = await API.getBigTournaments();
+        appData.tournaments = await API.getTournaments();
         console.log('✅ Турниры загружены:', appData.tournaments.length);
         
         updateTournamentStatuses();
         renderTournaments();
     } catch (error) {
         console.error('❌ Ошибка загрузки турниров:', error);
-        showAlert(`Ошибка загрузки турниров: ${error.message}`);
+        if (window.tg && window.tg.showAlert) {
+            window.tg.showAlert(`Ошибка загрузки турниров: ${error.message}`);
+        } else {
+            alert(`Ошибка загрузки турниров: ${error.message}`);
+        }
     }
 }
 
@@ -933,22 +937,39 @@ async function createTournament() {
             topPlayersCount: 20
         };
         
-        await API.createTournament(tournamentData);
+        console.log('📤 Отправляю данные турнира:', tournamentData);
+        
+        const result = await API.createTournament(tournamentData);
+        console.log('✅ Турнир создан:', result);
         
         // Перезагружаем турниры с сервера
         appData.tournaments = await API.getTournaments();
         
-        closeModal('addTournamentModal');
-        renderTournaments();
+        // Закрываем модал
+        const modal = document.getElementById('addTournamentModal');
+        if (modal) modal.style.display = 'none';
+        
+        // Обновляем интерфейс
+        loadTournaments();
         loadRegisteredUsers();
-        showAlert('Турнир создан успешно!');
+        
+        // Показываем уведомление
+        if (window.tg && window.tg.showAlert) {
+            window.tg.showAlert('Турнир создан успешно!');
+        } else {
+            alert('Турнир создан успешно!');
+        }
         
         // Очищаем форму
         document.getElementById('tournamentName').value = '';
-        document.getElementById('tournamentDate').value = '';
+        document.getElementById('tournamentDescription').value = '';
     } catch (error) {
-        console.error('Ошибка создания турнира:', error);
-        showAlert(error.message || 'Ошибка создания турнира');
+        console.error('❌ Ошибка создания турнира:', error);
+        if (window.tg && window.tg.showAlert) {
+            window.tg.showAlert('Ошибка создания турнира: ' + error.message);
+        } else {
+            alert('Ошибка создания турнира: ' + error.message);
+        }
     }
 }
 
@@ -1420,6 +1441,32 @@ async function showActivePlayers() {
     } catch (error) {
         console.error('Ошибка загрузки активных игроков:', error);
         showAlert('Ошибка загрузки активных игроков');
+    }
+}
+
+// Функция для показа уведомлений
+function showAlert(message) {
+    console.log('🔔 Alert:', message);
+    if (window.tg && window.tg.showAlert) {
+        try {
+            window.tg.showAlert(message);
+        } catch (error) {
+            console.warn('Telegram showAlert failed:', error);
+            alert(message);
+        }
+    } else {
+        alert(message);
+    }
+}
+
+// Функция для вибрации
+function vibrate() {
+    if (window.tg && window.tg.HapticFeedback) {
+        try {
+            window.tg.HapticFeedback.impactOccurred('light');
+        } catch (error) {
+            console.warn('Telegram vibrate failed:', error);
+        }
     }
 }
 
