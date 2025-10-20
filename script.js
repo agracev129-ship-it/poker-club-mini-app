@@ -1474,7 +1474,7 @@ async function loadGames() {
         const games = await API.getGames();
         console.log('✅ Игры загружены:', games.length);
         displayGames(games);
-        // loadMyTournamentStanding(); // Временно отключено
+        loadMyTournamentStanding();
     } catch (error) {
         console.error('❌ Ошибка загрузки игр:', error);
         showAlert('Ошибка загрузки игр: ' + error.message);
