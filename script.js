@@ -1,15 +1,32 @@
 // Инициализация Telegram WebApp
 let tg = window.Telegram.WebApp;
 
+// Проверка, что приложение запущено в Telegram
+if (!tg) {
+    console.error('❌ Telegram WebApp не найден! Приложение должно запускаться в Telegram.');
+    alert('Это приложение должно запускаться в Telegram!');
+}
+
 // Конфигурация API
 const API_BASE = 'https://poker-club-server-1.onrender.com/api';
 
 // API объект для взаимодействия с сервером
 const API = {
     async getUsers() {
-        const response = await fetch(`${API_BASE}/users`);
-        if (!response.ok) throw new Error('Ошибка загрузки пользователей');
-        return await response.json();
+        try {
+            console.log('🔍 Запрос к API:', `${API_BASE}/users`);
+            const response = await fetch(`${API_BASE}/users`);
+            console.log('📡 Ответ сервера:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('✅ Данные получены:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Ошибка API getUsers:', error);
+            throw new Error(`Ошибка подключения к серверу: ${error.message}`);
+        }
     },
 
     async getUserByTelegramId(telegramId) {
@@ -93,9 +110,20 @@ const API = {
 
     // Большие турниры
     async getBigTournaments() {
-        const response = await fetch(`${API_BASE}/big-tournaments`);
-        if (!response.ok) throw new Error('Ошибка загрузки турниров');
-        return await response.json();
+        try {
+            console.log('🔍 Запрос к API:', `${API_BASE}/big-tournaments`);
+            const response = await fetch(`${API_BASE}/big-tournaments`);
+            console.log('📡 Ответ сервера:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('✅ Турниры получены:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Ошибка API getBigTournaments:', error);
+            throw new Error(`Ошибка загрузки турниров: ${error.message}`);
+        }
     },
 
     async getActiveTournaments() {
@@ -251,32 +279,44 @@ const ADMIN_TELEGRAM_ID = 609464085;
 
 // Инициализация приложения
 async function initApp() {
-    tg.expand();
-    tg.enableClosingConfirmation();
-    appData.user = tg.initDataUnsafe.user;
+    console.log('🚀 Инициализация приложения...');
+    
+    if (tg) {
+        tg.expand();
+        tg.enableClosingConfirmation();
+        appData.user = tg.initDataUnsafe.user;
+        console.log('👤 Пользователь Telegram:', appData.user);
+    } else {
+        console.warn('⚠️ Telegram WebApp не найден, работаем в режиме браузера');
+    }
     
     await initializeData();
     setupEventListeners();
     await checkAuthentication();
-    console.log("Poker Club Mini App инициализирован");
+    console.log("✅ Poker Club Mini App инициализирован");
 }
 
 // Инициализация данных
 async function initializeData() {
     try {
+        console.log('🚀 Начинаю инициализацию данных...');
+        console.log('🌐 API_BASE:', API_BASE);
+        
         // Загружаем пользователей с сервера
+        console.log('👥 Загружаю пользователей...');
         appData.registeredUsers = await API.getUsers();
         
-        // Загружаем турниры с сервера
-        appData.tournaments = await API.getTournaments();
+        // Загружаем турниры с сервера (новая схема)
+        console.log('🏆 Загружаю турниры...');
+        appData.tournaments = await API.getBigTournaments();
         
-        console.log('Данные загружены с сервера:', {
+        console.log('✅ Данные загружены с сервера:', {
             users: appData.registeredUsers.length,
             tournaments: appData.tournaments.length
         });
     } catch (error) {
-        console.error('Ошибка загрузки данных с сервера:', error);
-        showAlert('Ошибка подключения к серверу. Проверьте интернет-соединение.');
+        console.error('❌ Ошибка загрузки данных с сервера:', error);
+        showAlert(`Ошибка подключения к серверу: ${error.message}`);
     }
 }
 
@@ -1057,13 +1097,18 @@ function filterTournaments(filter) {
 
 // Функция для показа уведомлений
 function showAlert(message) {
-    tg.showAlert(message);
-    console.log('Alert:', message);
+    console.log('🚨 Alert:', message);
+    if (tg && tg.showAlert) {
+        tg.showAlert(message);
+    } else {
+        // Fallback для браузера
+        alert(message);
+    }
 }
 
 // Функция для вибрации
 function vibrate() {
-    if (tg.HapticFeedback) {
+    if (tg && tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('medium');
     }
 }
@@ -1071,7 +1116,7 @@ function vibrate() {
 // Функция для изменения темы
 function applyTheme() {
     const body = document.body;
-    const isDark = tg.colorScheme === 'dark' || body.classList.contains('force-dark-theme');
+    const isDark = (tg && tg.colorScheme === 'dark') || body.classList.contains('force-dark-theme');
     
     if (isDark) {
         body.classList.add('dark-theme');
