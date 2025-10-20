@@ -85,6 +85,144 @@ const API = {
         const response = await fetch(`${API_BASE}/admin/stats`);
         if (!response.ok) throw new Error('Ошибка загрузки статистики');
         return await response.json();
+    },
+
+    // ============================================
+    // API ДЛЯ ИГР И ТУРНИРОВ V2.0
+    // ============================================
+
+    // Большие турниры
+    async getBigTournaments() {
+        const response = await fetch(`${API_BASE}/big-tournaments`);
+        if (!response.ok) throw new Error('Ошибка загрузки турниров');
+        return await response.json();
+    },
+
+    async getActiveTournaments() {
+        const response = await fetch(`${API_BASE}/big-tournaments/active`);
+        if (!response.ok) throw new Error('Ошибка загрузки активных турниров');
+        return await response.json();
+    },
+
+    async createBigTournament(tournamentData) {
+        const response = await fetch(`${API_BASE}/big-tournaments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(tournamentData)
+        });
+        if (!response.ok) throw new Error('Ошибка создания турнира');
+        return await response.json();
+    },
+
+    // Игры
+    async getGames(tournamentId = null) {
+        const url = tournamentId ? `${API_BASE}/games?tournamentId=${tournamentId}` : `${API_BASE}/games`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Ошибка загрузки игр');
+        return await response.json();
+    },
+
+    async getGame(gameId) {
+        const response = await fetch(`${API_BASE}/games/${gameId}`);
+        if (!response.ok) throw new Error('Ошибка загрузки игры');
+        return await response.json();
+    },
+
+    async createGame(gameData) {
+        const response = await fetch(`${API_BASE}/games`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(gameData)
+        });
+        if (!response.ok) throw new Error('Ошибка создания игры');
+        return await response.json();
+    },
+
+    async updateGameStatus(gameId, status) {
+        const response = await fetch(`${API_BASE}/games/${gameId}/status`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (!response.ok) throw new Error('Ошибка обновления статуса игры');
+        return await response.json();
+    },
+
+    // Регистрация на игры
+    async registerForGame(gameId, userId) {
+        const response = await fetch(`${API_BASE}/games/${gameId}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Ошибка регистрации на игру');
+        }
+        return await response.json();
+    },
+
+    async cancelGameRegistration(gameId, userId) {
+        const response = await fetch(`${API_BASE}/games/${gameId}/cancel`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Ошибка отмены регистрации');
+        }
+        return await response.json();
+    },
+
+    async markGamePayment(gameId, userId, isPaid) {
+        const response = await fetch(`${API_BASE}/games/${gameId}/mark-paid`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, isPaid })
+        });
+        if (!response.ok) throw new Error('Ошибка обновления статуса оплаты');
+        return await response.json();
+    },
+
+    // Результаты игр
+    async saveGameResults(gameId, results) {
+        const response = await fetch(`${API_BASE}/games/${gameId}/results`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ results })
+        });
+        if (!response.ok) throw new Error('Ошибка сохранения результатов');
+        return await response.json();
+    },
+
+    async getGameResults(gameId) {
+        const response = await fetch(`${API_BASE}/games/${gameId}/results`);
+        if (!response.ok) throw new Error('Ошибка загрузки результатов');
+        return await response.json();
+    },
+
+    // Турнирная таблица
+    async getTournamentStandings(tournamentId) {
+        const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/standings`);
+        if (!response.ok) throw new Error('Ошибка загрузки турнирной таблицы');
+        return await response.json();
+    },
+
+    async getMyTournamentStanding(tournamentId, userId) {
+        const response = await fetch(`${API_BASE}/tournaments/${tournamentId}/my-standing/${userId}`);
+        if (!response.ok) throw new Error('Ошибка загрузки моей позиции');
+        return await response.json();
+    },
+
+    // История игр
+    async getUserGameHistory(userId, tournamentId = null) {
+        const url = tournamentId ? 
+            `${API_BASE}/users/${userId}/game-history?tournamentId=${tournamentId}` : 
+            `${API_BASE}/users/${userId}/game-history`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Ошибка загрузки истории игр');
+        return await response.json();
     }
 };
 
@@ -826,6 +964,28 @@ function switchTab(tabName) {
     const navItem = document.querySelector(`[data-tab="${tabName}"]`);
     if (navItem) navItem.classList.add('active');
     vibrate();
+    
+    // Загружаем данные для активной вкладки
+    switch(tabName) {
+        case 'home':
+            loadUserData();
+            break;
+        case 'games':
+            loadGames();
+            break;
+        case 'tournaments':
+            loadTournaments();
+            break;
+        case 'rating':
+            loadRating();
+            break;
+        case 'profile':
+            loadUserData();
+            break;
+        case 'admin':
+            loadAdminData();
+            break;
+    }
 }
 
 // Выход
@@ -1213,6 +1373,449 @@ window.addActivity = addActivity;
 window.toggleTheme = toggleTheme;
 window.updateThemeIcon = updateThemeIcon;
 
+// ============================================
+// ФУНКЦИИ ДЛЯ ИГР И ТУРНИРОВ V2.0
+// ============================================
+
+// Загрузка игр
+async function loadGames() {
+    try {
+        const games = await API.getGames();
+        displayGames(games);
+        loadMyTournamentStanding();
+    } catch (error) {
+        console.error('Ошибка загрузки игр:', error);
+        showAlert('Ошибка загрузки игр: ' + error.message);
+    }
+}
+
+// Отображение игр
+function displayGames(games) {
+    const gamesList = document.getElementById('gamesList');
+    if (!gamesList) return;
+
+    if (games.length === 0) {
+        gamesList.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">🎮</div>
+                <h3>Нет игр</h3>
+                <p>Пока нет запланированных игр</p>
+            </div>
+        `;
+        return;
+    }
+
+    gamesList.innerHTML = games.map(game => createGameCard(game)).join('');
+}
+
+// Создание карточки игры
+function createGameCard(game) {
+    const gameDate = new Date(game.date);
+    const now = new Date();
+    const isUpcoming = gameDate > now;
+    const isToday = gameDate.toDateString() === now.toDateString();
+    
+    const statusText = {
+        'upcoming': 'Предстоящая',
+        'in_progress': 'Идёт сейчас',
+        'finished': 'Завершена'
+    }[game.status] || 'Неизвестно';
+
+    const statusClass = game.status;
+
+    return `
+        <div class="game-card" data-game-id="${game.id}">
+            <div class="game-header">
+                <div>
+                    <div class="game-title">Игра #${game.game_number}</div>
+                    <div class="game-tournament">${game.tournament_name || 'Турнир'}</div>
+                </div>
+                <div class="game-status ${statusClass}">${statusText}</div>
+            </div>
+            
+            <div class="game-info">
+                <div class="game-info-item">
+                    <div class="game-info-icon">📅</div>
+                    <div class="game-info-label">Дата</div>
+                    <div class="game-info-value">${formatGameDate(gameDate)}</div>
+                </div>
+                <div class="game-info-item">
+                    <div class="game-info-icon">👥</div>
+                    <div class="game-info-label">Участники</div>
+                    <div class="game-info-value">${game.registeredCount || 0}/${game.max_players}</div>
+                </div>
+                <div class="game-info-item">
+                    <div class="game-info-icon">💰</div>
+                    <div class="game-info-label">Buy-in</div>
+                    <div class="game-info-value">${game.buyin_amount || 1500}₽</div>
+                </div>
+                <div class="game-info-item">
+                    <div class="game-info-icon">💳</div>
+                    <div class="game-info-label">Оплачено</div>
+                    <div class="game-info-value">${game.paidCount || 0}</div>
+                </div>
+            </div>
+
+            <div class="game-participants">
+                <div class="participants-avatars" id="participants-${game.id}">
+                    <!-- Аватары участников -->
+                </div>
+                <div class="participants-count">${game.registeredCount || 0} участников</div>
+            </div>
+
+            <div class="game-actions">
+                ${createGameActions(game)}
+            </div>
+        </div>
+    `;
+}
+
+// Создание действий для игры
+function createGameActions(game) {
+    const gameDate = new Date(game.date);
+    const now = new Date();
+    const isUpcoming = gameDate > now;
+    const isRegistered = game.participants?.some(p => p.id === appData.currentUser?.id);
+    const isAdmin = appData.isAdmin;
+
+    let actions = '';
+
+    if (isUpcoming) {
+        if (isRegistered) {
+            actions += `
+                <button class="game-btn danger" onclick="cancelGameRegistration(${game.id})">
+                    <i class="fas fa-times"></i>
+                    <span>Отменить запись</span>
+                </button>
+            `;
+        } else {
+            actions += `
+                <button class="game-btn primary" onclick="registerForGame(${game.id})">
+                    <i class="fas fa-plus"></i>
+                    <span>Записаться</span>
+                </button>
+            `;
+        }
+    }
+
+    if (isAdmin) {
+        if (game.status === 'upcoming') {
+            actions += `
+                <button class="game-btn secondary" onclick="showGameDetails(${game.id})">
+                    <i class="fas fa-eye"></i>
+                    <span>Детали</span>
+                </button>
+            `;
+        }
+        
+        if (game.status === 'finished') {
+            actions += `
+                <button class="game-btn secondary" onclick="showGameResults(${game.id})">
+                    <i class="fas fa-trophy"></i>
+                    <span>Результаты</span>
+                </button>
+            `;
+        }
+    }
+
+    return actions;
+}
+
+// Форматирование даты игры
+function formatGameDate(date) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const gameDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    if (gameDate.getTime() === today.getTime()) {
+        return `Сегодня ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (gameDate.getTime() === today.getTime() + 24 * 60 * 60 * 1000) {
+        return `Завтра ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+    } else {
+        return date.toLocaleDateString('ru-RU', { 
+            day: '2-digit', 
+            month: '2-digit', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    }
+}
+
+// Записаться на игру
+async function registerForGame(gameId) {
+    try {
+        if (!appData.currentUser) {
+            showAlert('Необходимо войти в систему');
+            return;
+        }
+
+        await API.registerForGame(gameId, appData.currentUser.id);
+        showAlert('Вы успешно записались на игру!');
+        addActivity('🎮', 'Вы записались на игру');
+        loadGames();
+    } catch (error) {
+        console.error('Ошибка записи на игру:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
+// Отменить запись на игру
+async function cancelGameRegistration(gameId) {
+    try {
+        if (!appData.currentUser) {
+            showAlert('Необходимо войти в систему');
+            return;
+        }
+
+        const result = await API.cancelGameRegistration(gameId, appData.currentUser.id);
+        
+        if (result.penalty) {
+            showAlert(`Регистрация отменена. Применён штраф -${result.pointsDeducted} очков за позднюю отмену`);
+            addActivity('⚠️', `Отмена записи с штрафом -${result.pointsDeducted} очков`);
+        } else {
+            showAlert('Регистрация успешно отменена');
+            addActivity('✅', 'Отмена записи на игру');
+        }
+        
+        loadGames();
+    } catch (error) {
+        console.error('Ошибка отмены записи:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
+// Показать детали игры
+async function showGameDetails(gameId) {
+    try {
+        const game = await API.getGame(gameId);
+        const modal = document.getElementById('gameDetailsModal');
+        const title = document.getElementById('gameDetailsTitle');
+        const details = document.getElementById('gameDetails');
+
+        title.textContent = `Игра #${game.game_number}`;
+        
+        details.innerHTML = `
+            <div class="game-details-content">
+                <div class="game-detail-item">
+                    <strong>Турнир:</strong> ${game.tournament_name || 'Не указан'}
+                </div>
+                <div class="game-detail-item">
+                    <strong>Дата:</strong> ${formatGameDate(new Date(game.date))}
+                </div>
+                <div class="game-detail-item">
+                    <strong>Участники:</strong> ${game.registeredCount || 0}/${game.max_players}
+                </div>
+                <div class="game-detail-item">
+                    <strong>Buy-in:</strong> ${game.buyin_amount || 1500}₽
+                </div>
+                <div class="game-detail-item">
+                    <strong>Оплачено:</strong> ${game.paidCount || 0}
+                </div>
+                
+                ${game.participants && game.participants.length > 0 ? `
+                    <div class="participants-section">
+                        <h4>Участники:</h4>
+                        <div class="participants-list">
+                            ${game.participants.map(p => `
+                                <div class="participant-item">
+                                    <div class="participant-avatar">${p.avatar}</div>
+                                    <div class="participant-name">${p.game_nickname}</div>
+                                    <div class="participant-status ${p.is_paid ? 'paid' : 'unpaid'}">
+                                        ${p.is_paid ? '✅ Оплачено' : '❌ Не оплачено'}
+                                    </div>
+                                    ${appData.isAdmin ? `
+                                        <button class="payment-btn" onclick="togglePayment(${gameId}, ${p.id}, ${!p.is_paid})">
+                                            ${p.is_paid ? 'Отменить оплату' : 'Отметить оплату'}
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error('Ошибка загрузки деталей игры:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
+// Переключить статус оплаты
+async function togglePayment(gameId, userId, isPaid) {
+    try {
+        await API.markGamePayment(gameId, userId, isPaid);
+        showAlert(`Статус оплаты обновлён`);
+        showGameDetails(gameId); // Обновляем детали
+    } catch (error) {
+        console.error('Ошибка обновления оплаты:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
+// Показать результаты игры
+async function showGameResults(gameId) {
+    try {
+        const results = await API.getGameResults(gameId);
+        const modal = document.getElementById('gameResultsModal');
+        const form = document.getElementById('resultsForm');
+
+        form.innerHTML = `
+            <h3>Результаты игры</h3>
+            <div class="results-list">
+                ${results.map((result, index) => `
+                    <div class="result-item">
+                        <div class="result-avatar">${result.avatar}</div>
+                        <div class="result-name">${result.game_nickname}</div>
+                        <div class="result-place">
+                            <span>Место:</span>
+                            <input type="number" value="${result.place}" min="1" max="30" 
+                                   onchange="updateResultPoints(${result.id}, this.value)">
+                        </div>
+                        <div class="result-points">${result.points_earned} очков</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error('Ошибка загрузки результатов:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
+// Обновить очки при изменении места
+function updateResultPoints(resultId, place) {
+    const points = calculatePoints(parseInt(place));
+    const resultItem = event.target.closest('.result-item');
+    const pointsElement = resultItem.querySelector('.result-points');
+    pointsElement.textContent = `${points} очков`;
+}
+
+// Расчёт очков по месту
+function calculatePoints(place) {
+    const pointsSystem = {
+        1: 300, 2: 240, 3: 195, 4: 150, 5: 150,
+        6: 90, 7: 90, 8: 90, 9: 90, 10: 90
+    };
+    return pointsSystem[place] || 30;
+}
+
+// Загрузить мою позицию в турнире
+async function loadMyTournamentStanding() {
+    try {
+        if (!appData.currentUser) return;
+
+        const tournaments = await API.getActiveTournaments();
+        if (tournaments.length === 0) return;
+
+        const tournament = tournaments[0]; // Берём первый активный турнир
+        const standing = await API.getMyTournamentStanding(tournament.id, appData.currentUser.id);
+        
+        const container = document.getElementById('myTournamentStanding');
+        if (!container) return;
+
+        document.getElementById('myPosition').textContent = standing.position || '-';
+        document.getElementById('myPoints').textContent = standing.totalPoints || 0;
+        document.getElementById('myGames').textContent = standing.gamesPlayed || 0;
+        
+        const statusElement = document.getElementById('myStatus');
+        if (standing.inGrandFinal) {
+            statusElement.innerHTML = '<span class="status-badge">✅ В финале</span>';
+        } else {
+            const pointsToTop20 = standing.pointsToTop20 || 0;
+            statusElement.innerHTML = `<span class="status-badge">❌ Нужно ${pointsToTop20} очков до топ-20</span>`;
+        }
+
+        container.style.display = 'block';
+    } catch (error) {
+        console.error('Ошибка загрузки позиции:', error);
+    }
+}
+
+// Показать турнирную таблицу
+async function showTournamentStandings(tournamentId) {
+    try {
+        const standings = await API.getTournamentStandings(tournamentId);
+        const modal = document.getElementById('tournamentStandingsModal');
+        const title = document.getElementById('standingsTitle');
+        const list = document.getElementById('standingsList');
+
+        title.textContent = 'Турнирная таблица';
+        
+        list.innerHTML = standings.map((standing, index) => `
+            <div class="standings-item ${index < 3 ? 'top3' : index < 20 ? 'top20' : ''}">
+                <div class="standings-rank">${standing.position}</div>
+                <div class="standings-player">
+                    <div class="standings-avatar">${standing.avatar}</div>
+                    <div class="standings-name">${standing.game_nickname}</div>
+                </div>
+                <div class="standings-stats">
+                    <div class="standings-points">${standing.total_points} очков</div>
+                    <div class="standings-games">${standing.games_played} игр</div>
+                </div>
+            </div>
+        `).join('');
+
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error('Ошибка загрузки таблицы:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
+// Создать игру (админ)
+async function showAddGameModal() {
+    try {
+        const tournaments = await API.getActiveTournaments();
+        const select = document.getElementById('gameTournament');
+        
+        select.innerHTML = tournaments.map(t => 
+            `<option value="${t.id}">${t.name}</option>`
+        ).join('');
+
+        const modal = document.getElementById('addGameModal');
+        modal.style.display = 'flex';
+    } catch (error) {
+        console.error('Ошибка загрузки турниров:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
+// Создать игру
+async function createGame() {
+    try {
+        const tournamentId = document.getElementById('gameTournament').value;
+        const gameNumber = document.getElementById('gameNumber').value;
+        const date = document.getElementById('gameDate').value;
+        const maxPlayers = document.getElementById('gameMaxPlayers').value;
+        const buyin = document.getElementById('gameBuyin').value;
+
+        if (!tournamentId || !gameNumber || !date) {
+            showAlert('Заполните все обязательные поля');
+            return;
+        }
+
+        await API.createGame({
+            tournamentId: parseInt(tournamentId),
+            gameNumber: parseInt(gameNumber),
+            date: new Date(date).toISOString(),
+            maxPlayers: parseInt(maxPlayers),
+            buyinAmount: parseInt(buyin)
+        });
+
+        showAlert('Игра создана успешно!');
+        closeModal('addGameModal');
+        loadGames();
+    } catch (error) {
+        console.error('Ошибка создания игры:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
 // Экспорт функций для использования в других скриптах
 window.TelegramApp = {
     showAlert,
@@ -1220,3 +1823,14 @@ window.TelegramApp = {
     tg,
     appData
 };
+
+// Экспорт новых функций для игр
+window.registerForGame = registerForGame;
+window.cancelGameRegistration = cancelGameRegistration;
+window.showGameDetails = showGameDetails;
+window.togglePayment = togglePayment;
+window.showGameResults = showGameResults;
+window.showTournamentStandings = showTournamentStandings;
+window.showAddGameModal = showAddGameModal;
+window.createGame = createGame;
+window.loadGames = loadGames;

@@ -83,6 +83,10 @@
                 <i class="fas fa-home"></i>
                 <span>Главная</span>
             </button>
+            <button class="nav-tab" data-tab="games">
+                <i class="fas fa-gamepad"></i>
+                <span>Игры</span>
+            </button>
             <button class="nav-tab" data-tab="tournaments">
                 <i class="fas fa-trophy"></i>
                 <span>Турниры</span>
@@ -163,6 +167,62 @@
                             <div class="activity-icon">🎯</div>
                             <div class="activity-text">Добро пожаловать в клуб!</div>
                             <div class="activity-time">Сейчас</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Games Tab -->
+            <div class="tab-content" id="games">
+                <div class="section-header">
+                    <h2>🎮 Игры</h2>
+                    <div class="header-actions">
+                        <button class="btn-refresh" id="refreshGames">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn-add" id="addGameBtn" onclick="showAddGameModal()" style="display: none;">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="games-filters">
+                    <button class="filter-btn active" data-filter="upcoming">Предстоящие</button>
+                    <button class="filter-btn" data-filter="in_progress">Идут сейчас</button>
+                    <button class="filter-btn" data-filter="finished">Завершённые</button>
+                    <button class="filter-btn" data-filter="my">Мои игры</button>
+                </div>
+
+                <div class="games-calendar">
+                    <h3>📅 Календарь игр</h3>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- Календарь будет загружен динамически -->
+                    </div>
+                </div>
+
+                <div class="games-list" id="gamesList">
+                    <!-- Игры будут загружены динамически -->
+                </div>
+
+                <div class="my-tournament-standing" id="myTournamentStanding" style="display: none;">
+                    <h3>🏆 Моя позиция в турнире</h3>
+                    <div class="standing-card">
+                        <div class="standing-position">
+                            <span class="position-number" id="myPosition">-</span>
+                            <span class="position-label">место</span>
+                        </div>
+                        <div class="standing-stats">
+                            <div class="stat">
+                                <span class="stat-value" id="myPoints">0</span>
+                                <span class="stat-label">очков</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value" id="myGames">0</span>
+                                <span class="stat-label">игр</span>
+                            </div>
+                        </div>
+                        <div class="standing-status" id="myStatus">
+                            <span class="status-badge">❌ Не в финале</span>
                         </div>
                     </div>
                 </div>
@@ -326,6 +386,10 @@
                 <i class="fas fa-home"></i>
                 <span>Главная</span>
             </button>
+            <button class="nav-item" data-tab="games">
+                <i class="fas fa-gamepad"></i>
+                <span>Игры</span>
+            </button>
             <button class="nav-item" data-tab="tournaments">
                 <i class="fas fa-trophy"></i>
                 <span>Турниры</span>
@@ -425,6 +489,93 @@
                 <div class="modal-body">
                     <div class="user-profile-details" id="userProfileDetails">
                         <!-- Детали профиля будут загружены динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Game Modal -->
+        <div class="modal" id="addGameModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Создать новую игру</h2>
+                    <button class="close-btn" onclick="closeModal('addGameModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="gameTournament">Турнир:</label>
+                        <select id="gameTournament">
+                            <!-- Турниры будут загружены динамически -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gameNumber">Номер игры:</label>
+                        <input type="number" id="gameNumber" min="1" placeholder="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="gameDate">Дата и время:</label>
+                        <input type="datetime-local" id="gameDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="gameMaxPlayers">Максимум игроков:</label>
+                        <input type="number" id="gameMaxPlayers" min="8" max="30" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="gameBuyin">Buy-in (₽):</label>
+                        <input type="number" id="gameBuyin" min="0" value="1500">
+                    </div>
+                    <button class="create-btn" onclick="createGame()">
+                        <i class="fas fa-plus"></i>
+                        <span>Создать игру</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Details Modal -->
+        <div class="modal" id="gameDetailsModal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2 id="gameDetailsTitle">Детали игры</h2>
+                    <button class="close-btn" onclick="closeModal('gameDetailsModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="game-details" id="gameDetails">
+                        <!-- Детали игры будут загружены динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Results Modal -->
+        <div class="modal" id="gameResultsModal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2>Внести результаты игры</h2>
+                    <button class="close-btn" onclick="closeModal('gameResultsModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="results-form" id="resultsForm">
+                        <!-- Форма результатов будет загружена динамически -->
+                    </div>
+                    <button class="create-btn" onclick="saveGameResults()">
+                        <i class="fas fa-save"></i>
+                        <span>Сохранить результаты</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tournament Standings Modal -->
+        <div class="modal" id="tournamentStandingsModal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2 id="standingsTitle">Турнирная таблица</h2>
+                    <button class="close-btn" onclick="closeModal('tournamentStandingsModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="standings-list" id="standingsList">
+                        <!-- Турнирная таблица будет загружена динамически -->
                     </div>
                 </div>
             </div>
