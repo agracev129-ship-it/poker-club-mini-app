@@ -10,6 +10,31 @@ if (!tg) {
 // Конфигурация API
 const API_BASE = 'https://poker-club-server-1.onrender.com/api';
 
+// Проверка доступности API
+async function checkApiConnection() {
+    try {
+        console.log('🔍 Проверяю подключение к API...');
+        const response = await fetch(`${API_BASE}/users`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            console.log('✅ API доступен, статус:', response.status);
+            return true;
+        } else {
+            console.error('❌ API недоступен, статус:', response.status);
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Ошибка подключения к API:', error);
+        return false;
+    }
+}
+
 // API объект для взаимодействия с сервером
 const API = {
     async getUsers() {
@@ -60,19 +85,42 @@ const API = {
     },
 
     async getTournaments() {
-        const response = await fetch(`${API_BASE}/tournaments`);
-        if (!response.ok) throw new Error('Ошибка загрузки турниров');
-        return await response.json();
+        try {
+            console.log('🔍 Загружаю турниры...');
+            const response = await fetch(`${API_BASE}/big-tournaments`);
+            console.log('📡 Ответ сервера:', response.status, response.statusText);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            const data = await response.json();
+            console.log('✅ Турниры загружены:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Ошибка загрузки турниров:', error);
+            throw new Error(`Ошибка загрузки турниров: ${error.message}`);
+        }
     },
 
     async createTournament(tournamentData) {
-        const response = await fetch(`${API_BASE}/tournaments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(tournamentData)
-        });
-        if (!response.ok) throw new Error('Ошибка создания турнира');
-        return await response.json();
+        try {
+            console.log('🔍 Создаю турнир:', tournamentData);
+            const response = await fetch(`${API_BASE}/big-tournaments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tournamentData)
+            });
+            console.log('📡 Ответ сервера:', response.status, response.statusText);
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Ошибка создания турнира');
+            }
+            const data = await response.json();
+            console.log('✅ Турнир создан:', data);
+            return data;
+        } catch (error) {
+            console.error('❌ Ошибка создания турнира:', error);
+            throw new Error(`Ошибка создания турнира: ${error.message}`);
+        }
     },
 
     async joinTournament(tournamentId, userId) {
@@ -313,6 +361,13 @@ async function initializeData() {
         console.log('🚀 Начинаю инициализацию данных...');
         console.log('🌐 API_BASE:', API_BASE);
         
+        // Проверяем подключение к API
+        const apiAvailable = await checkApiConnection();
+        if (!apiAvailable) {
+            console.warn('⚠️ API недоступен, работаем в офлайн режиме');
+            showAlert('Сервер временно недоступен. Некоторые функции могут не работать.');
+        }
+        
         // Инициализируем пустые массивы
         appData.registeredUsers = [];
         appData.tournaments = [];
@@ -485,7 +540,7 @@ async function loadAllData() {
 }
 
 // Загрузка данных пользователя
-function loadUserData() {
+async function loadUserData() {
     if (appData.currentUser) {
         document.getElementById('userName').textContent = appData.currentUser.gameNickname;
         document.getElementById('userRank').textContent = getRankName(appData.currentUser.stats?.currentRank || 1);
@@ -493,6 +548,9 @@ function loadUserData() {
         document.getElementById('profileRank').textContent = `Ранг: ${getRankName(appData.currentUser.stats?.currentRank || 1)}`;
         document.getElementById('userNickname').textContent = appData.currentUser.gameNickname;
         document.getElementById('profileNickname').style.display = 'block';
+        
+        // Загружаем историю игр и статистику
+        await loadUserGameHistory();
         
         // Обновляем аватарку
         const profileAvatarEl = document.getElementById('profileAvatar');
@@ -1796,6 +1854,58 @@ async function loadMyTournamentStanding() {
     }
 }
 
+// Загрузить историю игр пользователя
+async function loadUserGameHistory() {
+    try {
+        if (!appData.currentUser) return;
+
+        console.log('📚 Загружаю историю игр...');
+        const history = await API.getUserGameHistory(appData.currentUser.id);
+        console.log('✅ История игр загружена:', history.length, 'игр');
+
+        // Обновляем статистику в профиле
+        updateUserStats(history);
+        
+        return history;
+    } catch (error) {
+        console.error('Ошибка загрузки истории игр:', error);
+        return [];
+    }
+}
+
+// Обновить статистику пользователя
+function updateUserStats(history) {
+    if (!history || history.length === 0) return;
+
+    const totalGames = history.length;
+    const wins = history.filter(game => game.place === 1).length;
+    const totalPoints = history.reduce((sum, game) => sum + (game.points_earned || 0), 0);
+    const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+    const averagePoints = totalGames > 0 ? Math.round(totalPoints / totalGames) : 0;
+
+    // Обновляем элементы на странице
+    const profileGames = document.getElementById('profileGames');
+    const profileWins = document.getElementById('profileWins');
+    const profileWinRate = document.getElementById('profileWinRate');
+    const profilePoints = document.getElementById('profilePoints');
+
+    if (profileGames) profileGames.textContent = totalGames;
+    if (profileWins) profileWins.textContent = wins;
+    if (profileWinRate) profileWinRate.textContent = `${winRate}%`;
+    if (profilePoints) profilePoints.textContent = totalPoints;
+
+    // Обновляем главную страницу
+    const totalWins = document.getElementById('totalWins');
+    const totalGames = document.getElementById('totalGames');
+    const currentRank = document.getElementById('currentRank');
+
+    if (totalWins) totalWins.textContent = wins;
+    if (totalGames) totalGames.textContent = totalGames;
+    if (currentRank) currentRank.textContent = averagePoints;
+
+    console.log('📊 Статистика обновлена:', { totalGames, wins, winRate, totalPoints, averagePoints });
+}
+
 // Показать турнирную таблицу
 async function showTournamentStandings(tournamentId) {
     try {
@@ -1859,6 +1969,7 @@ async function createGame() {
             return;
         }
 
+        console.log('🎮 Создаю игру...');
         await API.createGame({
             tournamentId: parseInt(tournamentId),
             gameNumber: parseInt(gameNumber),
@@ -1868,6 +1979,7 @@ async function createGame() {
         });
 
         showAlert('Игра создана успешно!');
+        addActivity('🎮', 'Создана новая игра');
         closeModal('addGameModal');
         loadGames();
     } catch (error) {
@@ -1884,6 +1996,48 @@ window.TelegramApp = {
     appData
 };
 
+// Сохранить результаты игры
+async function saveGameResults() {
+    try {
+        const gameId = document.getElementById('gameResultsModal').dataset.gameId;
+        if (!gameId) {
+            showAlert('Ошибка: ID игры не найден');
+            return;
+        }
+
+        const results = [];
+        const resultItems = document.querySelectorAll('.result-item');
+        
+        resultItems.forEach((item, index) => {
+            const userId = item.dataset.userId;
+            const place = item.querySelector('input[type="number"]').value;
+            
+            if (userId && place) {
+                results.push({
+                    userId: parseInt(userId),
+                    place: parseInt(place)
+                });
+            }
+        });
+
+        if (results.length === 0) {
+            showAlert('Нет результатов для сохранения');
+            return;
+        }
+
+        console.log('💾 Сохраняю результаты игры:', results);
+        await API.saveGameResults(gameId, results);
+        
+        showAlert('Результаты сохранены успешно!');
+        addActivity('🏆', 'Результаты игры сохранены');
+        closeModal('gameResultsModal');
+        loadGames();
+    } catch (error) {
+        console.error('Ошибка сохранения результатов:', error);
+        showAlert('Ошибка: ' + error.message);
+    }
+}
+
 // Экспорт новых функций для игр
 window.registerForGame = registerForGame;
 window.cancelGameRegistration = cancelGameRegistration;
@@ -1894,3 +2048,6 @@ window.showTournamentStandings = showTournamentStandings;
 window.showAddGameModal = showAddGameModal;
 window.createGame = createGame;
 window.loadGames = loadGames;
+window.saveGameResults = saveGameResults;
+window.loadUserGameHistory = loadUserGameHistory;
+window.updateUserStats = updateUserStats;
