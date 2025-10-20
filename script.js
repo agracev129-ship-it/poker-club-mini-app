@@ -423,53 +423,82 @@ async function checkAuthentication() {
 
 // Показать модальное окно входа
 function showLoginModal() {
+    console.log('🔐 Показываю модальное окно входа...');
     const modal = document.getElementById('loginModal');
     const adminBtn = document.getElementById('adminLoginBtn');
     
+    if (!modal) {
+        console.error('❌ Модальное окно входа не найдено!');
+        return;
+    }
+    
     if (appData.user && appData.user.id === ADMIN_TELEGRAM_ID) {
+        console.log('👑 Показываю кнопку администратора');
         adminBtn.style.display = 'block';
     } else {
+        console.log('👤 Скрываю кнопку администратора');
         adminBtn.style.display = 'none';
     }
     
     modal.style.display = 'block';
+    console.log('✅ Модальное окно входа показано');
 }
 
 // Вход как пользователь
 async function loginAsUser() {
+    console.log('👤 Вход как пользователь...');
     closeModal('loginModal');
     
     try {
+        if (!appData.user || !appData.user.id) {
+            console.error('❌ Данные пользователя не найдены');
+            showAlert('Ошибка: данные пользователя не найдены');
+            return;
+        }
+        
+        console.log('🔍 Ищу пользователя с ID:', appData.user.id);
         const user = await API.getUserByTelegramId(appData.user.id);
+        console.log('👤 Найденный пользователь:', user);
         
         if (user) {
             appData.currentUser = user;
             appData.isLoggedIn = true;
             appData.isAdmin = false;
+            console.log('✅ Пользователь авторизован');
             updateUserInterface();
-            loadAllData();
+            await loadAllData();
         } else {
+            console.log('📝 Пользователь не найден, показываю регистрацию');
             showRegistrationModal();
         }
     } catch (error) {
-        console.error('Ошибка входа:', error);
-        showAlert('Ошибка входа в систему');
+        console.error('❌ Ошибка входа:', error);
+        showAlert('Ошибка входа в систему: ' + error.message);
     }
 }
 
 // Вход как администратор
 async function loginAsAdmin() {
+    console.log('👑 Вход как администратор...');
     closeModal('loginModal');
     
     try {
+        if (!appData.user || !appData.user.id) {
+            console.error('❌ Данные пользователя не найдены');
+            showAlert('Ошибка: данные пользователя не найдены');
+            return;
+        }
+        
+        console.log('🔍 Ищу администратора с ID:', appData.user.id);
         const user = await API.getUserByTelegramId(appData.user.id);
         
         if (user) {
             appData.currentUser = user;
             appData.isLoggedIn = true;
             appData.isAdmin = true;
+            console.log('✅ Администратор авторизован');
             updateUserInterface();
-            loadAllData();
+            await loadAllData();
         } else {
             // Создаём админа автоматически
             const adminUser = {
@@ -1464,18 +1493,27 @@ async function showActivePlayers() {
 }
 
 // Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-    initApp();
-    applyTheme();
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('📄 DOM загружен, начинаю инициализацию...');
+    try {
+        await initApp();
+        applyTheme();
+        console.log('✅ Инициализация завершена успешно');
+    } catch (error) {
+        console.error('❌ Критическая ошибка инициализации:', error);
+        alert('Ошибка инициализации приложения: ' + error.message);
+    }
 });
 
 // Обработчик изменения темы
-tg.onEvent('themeChanged', applyTheme);
-
-// Обработчик изменения размера окна
-tg.onEvent('viewportChanged', function() {
-    console.log('Размер окна изменился');
-});
+if (tg && tg.onEvent) {
+    tg.onEvent('themeChanged', applyTheme);
+    
+    // Обработчик изменения размера окна
+    tg.onEvent('viewportChanged', function() {
+        console.log('Размер окна изменился');
+    });
+}
 
 // Экспорт функций для глобального использования
 window.joinTournament = joinTournament;
