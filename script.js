@@ -592,8 +592,8 @@ async function loadUserData() {
         document.getElementById('userNickname').textContent = appData.currentUser.gameNickname;
         document.getElementById('profileNickname').style.display = 'block';
         
-        // Загружаем историю игр и статистику
-        await loadUserGameHistory();
+        // Загружаем историю игр и статистику (временно отключено)
+        // await loadUserGameHistory();
         
         // Обновляем аватарку
         const profileAvatarEl = document.getElementById('profileAvatar');
@@ -1125,10 +1125,10 @@ async function switchTab(tabName) {
             await loadUserData();
             break;
         case 'games':
-            loadGames();
+            await loadGames();
             break;
         case 'tournaments':
-            loadTournaments();
+            await loadTournaments();
             break;
         case 'rating':
             loadRating();
@@ -1552,7 +1552,7 @@ async function loadGames() {
         const games = await API.getGames();
         console.log('✅ Игры загружены:', games.length);
         displayGames(games);
-        loadMyTournamentStanding();
+        // loadMyTournamentStanding(); // Временно отключено - API не существует
     } catch (error) {
         console.error('❌ Ошибка загрузки игр:', error);
         showAlert('Ошибка загрузки игр: ' + error.message);
