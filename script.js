@@ -3,8 +3,7 @@ let tg = window.Telegram.WebApp;
 
 // Проверка, что приложение запущено в Telegram
 if (!tg) {
-    console.error('❌ Telegram WebApp не найден! Приложение должно запускаться в Telegram.');
-    alert('Это приложение должно запускаться в Telegram!');
+    console.warn('⚠️ Telegram WebApp не найден, работаем в режиме браузера');
 }
 
 // Конфигурация API
@@ -640,12 +639,16 @@ function loadAchievements() {
 async function loadRegisteredUsers() {
     if (appData.isAdmin) {
         try {
+            // Загружаем пользователей
+            appData.registeredUsers = await API.getUsers();
+            
+            // Загружаем статистику
             const stats = await API.getStats();
             document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
             document.getElementById('totalTournaments').textContent = stats.totalTournaments || 0;
             document.getElementById('activeGames').textContent = stats.activeGames || 0;
         } catch (error) {
-            console.error('Ошибка загрузки статистики:', error);
+            console.error('Ошибка загрузки данных:', error);
         }
     }
 }
@@ -912,25 +915,22 @@ async function createTournament() {
     if (!appData.isAdmin) return;
     
     const name = document.getElementById('tournamentName').value.trim();
-    const date = document.getElementById('tournamentDate').value;
-    const duration = parseInt(document.getElementById('tournamentDuration').value);
-    const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
-    const prize = parseInt(document.getElementById('tournamentPrize').value);
-    const type = document.getElementById('tournamentType').value;
+    const description = document.getElementById('tournamentDescription').value.trim();
+    const duration = parseInt(document.getElementById('tournamentDuration').value) || 2;
+    const maxPlayers = parseInt(document.getElementById('tournamentMaxPlayers').value) || 20;
+    const gameType = document.getElementById('tournamentGameType').value;
     
-    if (!name || !date) {
-        showAlert('Заполните все обязательные поля!');
+    if (!name) {
+        showAlert('Введите название турнира!');
         return;
     }
     
     try {
         const tournamentData = {
             name: name,
-            date: new Date(date).toISOString(),
-            duration: duration,
-            maxPlayers: maxPlayers,
-            prize: prize,
-            type: type
+            description: description,
+            startDate: new Date().toISOString(),
+            topPlayersCount: 20
         };
         
         await API.createTournament(tournamentData);
@@ -1474,7 +1474,7 @@ async function loadGames() {
         const games = await API.getGames();
         console.log('✅ Игры загружены:', games.length);
         displayGames(games);
-        loadMyTournamentStanding();
+        // loadMyTournamentStanding(); // Временно отключено
     } catch (error) {
         console.error('❌ Ошибка загрузки игр:', error);
         showAlert('Ошибка загрузки игр: ' + error.message);
