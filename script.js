@@ -6,6 +6,8 @@ if (!tg) {
     console.warn('⚠️ Telegram WebApp не найден, работаем в режиме браузера');
 }
 
+
+
 // Конфигурация API
 const API_BASE = 'https://poker-club-server-1.onrender.com/api';
 
@@ -1095,7 +1097,7 @@ async function showUsersList() {
     document.getElementById('usersListModal').style.display = 'block';
 }
 
-function showTournamentsManagement() {
+async function showTournamentsManagement() {
     if (!appData.isAdmin) return;
     await switchTab('tournaments');
 }
@@ -1988,13 +1990,13 @@ function updateUserStats(history) {
     if (profilePoints) profilePoints.textContent = totalPoints;
 
     // Обновляем главную страницу
-    const totalWins = document.getElementById('totalWins');
-    const totalGames = document.getElementById('totalGames');
-    const currentRank = document.getElementById('currentRank');
+    const totalWinsEl = document.getElementById('totalWins');
+    const totalGamesEl = document.getElementById('totalGames');
+    const currentRankEl = document.getElementById('currentRank');
 
-    if (totalWins) totalWins.textContent = wins;
-    if (totalGames) totalGames.textContent = totalGames;
-    if (currentRank) currentRank.textContent = averagePoints;
+    if (totalWinsEl) totalWinsEl.textContent = wins;
+    if (totalGamesEl) totalGamesEl.textContent = totalGames;
+    if (currentRankEl) currentRankEl.textContent = averagePoints;
 
     console.log('📊 Статистика обновлена:', { totalGames, wins, winRate, totalPoints, averagePoints });
 }
