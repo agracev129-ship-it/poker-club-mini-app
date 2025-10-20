@@ -3,8 +3,7 @@ let tg = window.Telegram.WebApp;
 
 // Проверка, что приложение запущено в Telegram
 if (!tg) {
-    console.error('❌ Telegram WebApp не найден! Приложение должно запускаться в Telegram.');
-    alert('Это приложение должно запускаться в Telegram!');
+    console.warn('⚠️ Telegram WebApp не найден, работаем в режиме браузера');
 }
 
 // Конфигурация API
@@ -354,8 +353,19 @@ async function initApp() {
     await initializeData();
     console.log('🎯 Настраиваю обработчики событий...');
     setupEventListeners();
-    console.log('🔐 Проверяю аутентификацию...');
-    await checkAuthentication();
+    
+    // Проверяем аутентификацию только если есть пользователь
+    if (appData.user) {
+        console.log('🔐 Проверяю аутентификацию...');
+        await checkAuthentication();
+    } else {
+        console.log('👤 Пользователь не найден, показываю модальное окно входа');
+        // Показываем модальное окно с задержкой, чтобы DOM был готов
+        setTimeout(() => {
+            showLoginModal();
+        }, 100);
+    }
+    
     console.log("✅ Poker Club Mini App инициализирован");
 }
 
@@ -400,8 +410,16 @@ async function checkAuthentication() {
         
         // Проверяем, есть ли пользователь на сервере
         console.log('🔍 Ищу пользователя на сервере...');
-        const user = await API.getUserByTelegramId(telegramId);
-        console.log('👤 Найденный пользователь:', user);
+        let user = null;
+        try {
+            user = await API.getUserByTelegramId(telegramId);
+            console.log('👤 Найденный пользователь:', user);
+        } catch (apiError) {
+            console.error('❌ Ошибка API при поиске пользователя:', apiError);
+            console.log('📝 Показываю модальное окно входа из-за ошибки API');
+            showLoginModal();
+            return;
+        }
         
         if (user) {
             appData.currentUser = user;
@@ -574,40 +592,59 @@ async function registerUser() {
 
 // Загрузка всех данных
 async function loadAllData() {
-    await initializeData(); // Перезагружаем с сервера
-    await loadUserData();
-    await loadTournaments();
-    loadRating();
-    loadAchievements();
-    await loadRegisteredUsers();
+    try {
+        console.log('📊 Загружаю все данные...');
+        await initializeData(); // Перезагружаем с сервера
+        await loadUserData();
+        await loadTournaments();
+        loadRating();
+        loadAchievements();
+        await loadRegisteredUsers();
+        console.log('✅ Все данные загружены');
+    } catch (error) {
+        console.error('❌ Ошибка загрузки данных:', error);
+        // Не показываем alert, чтобы не блокировать приложение
+    }
 }
 
 // Загрузка данных пользователя
 async function loadUserData() {
-    if (appData.currentUser) {
-        document.getElementById('userName').textContent = appData.currentUser.gameNickname;
-        document.getElementById('userRank').textContent = getRankName(appData.currentUser.stats?.currentRank || 1);
-        document.getElementById('profileName').textContent = appData.currentUser.gameNickname;
-        document.getElementById('profileRank').textContent = `Ранг: ${getRankName(appData.currentUser.stats?.currentRank || 1)}`;
-        document.getElementById('userNickname').textContent = appData.currentUser.gameNickname;
-        document.getElementById('profileNickname').style.display = 'block';
+    try {
+        if (appData.currentUser) {
+            console.log('👤 Загружаю данные пользователя:', appData.currentUser.gameNickname);
+            
+            const userName = document.getElementById('userName');
+            const userRank = document.getElementById('userRank');
+            const profileName = document.getElementById('profileName');
+            const profileRank = document.getElementById('profileRank');
+            const userNickname = document.getElementById('userNickname');
+            const profileNickname = document.getElementById('profileNickname');
+            
+            if (userName) userName.textContent = appData.currentUser.gameNickname;
+            if (userRank) userRank.textContent = getRankName(appData.currentUser.stats?.currentRank || 1);
+            if (profileName) profileName.textContent = appData.currentUser.gameNickname;
+            if (profileRank) profileRank.textContent = `Ранг: ${getRankName(appData.currentUser.stats?.currentRank || 1)}`;
+            if (userNickname) userNickname.textContent = appData.currentUser.gameNickname;
+            if (profileNickname) profileNickname.style.display = 'block';
         
-        // Загружаем историю игр и статистику (временно отключено)
-        // await loadUserGameHistory();
-        
-        // Обновляем аватарку
-        const profileAvatarEl = document.getElementById('profileAvatar');
-        const userAvatarEl = document.getElementById('userAvatar');
-        
-        if (appData.currentUser.avatar === 'custom' && (appData.currentUser.customAvatarUrl || appData.currentUser.telegramAvatarUrl)) {
-            const avatarUrl = appData.currentUser.customAvatarUrl || appData.currentUser.telegramAvatarUrl;
-            profileAvatarEl.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-            userAvatarEl.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
-        } else {
-            const avatar = appData.currentUser.avatar || '👤';
-            profileAvatarEl.textContent = avatar;
-            userAvatarEl.textContent = avatar;
-        }
+            // Загружаем историю игр и статистику (временно отключено)
+            // await loadUserGameHistory();
+            
+            // Обновляем аватарку
+            const profileAvatarEl = document.getElementById('profileAvatar');
+            const userAvatarEl = document.getElementById('userAvatar');
+            
+            if (profileAvatarEl && userAvatarEl) {
+                if (appData.currentUser.avatar === 'custom' && (appData.currentUser.customAvatarUrl || appData.currentUser.telegramAvatarUrl)) {
+                    const avatarUrl = appData.currentUser.customAvatarUrl || appData.currentUser.telegramAvatarUrl;
+                    profileAvatarEl.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                    userAvatarEl.innerHTML = `<img src="${avatarUrl}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                } else {
+                    const avatar = appData.currentUser.avatar || '👤';
+                    profileAvatarEl.textContent = avatar;
+                    userAvatarEl.textContent = avatar;
+                }
+            }
         
         // Обновляем статистику
         const stats = appData.currentUser.stats || {};
@@ -622,6 +659,10 @@ async function loadUserData() {
             ? Math.round((stats.totalWins / stats.totalGames) * 100)
             : 0;
         document.getElementById('profileWinRate').textContent = `${winRate}%`;
+        }
+        console.log('✅ Данные пользователя загружены');
+    } catch (error) {
+        console.error('❌ Ошибка загрузки данных пользователя:', error);
     }
 }
 
