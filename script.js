@@ -84,13 +84,13 @@ const API = {
     },
 
     async getTournaments() {
-        const response = await fetch(`${API_BASE}/tournaments`);
+        const response = await fetch(`${API_BASE}/big-tournaments`);
         if (!response.ok) throw new Error('Ошибка загрузки турниров');
         return await response.json();
     },
 
     async createTournament(tournamentData) {
-        const response = await fetch(`${API_BASE}/tournaments`, {
+        const response = await fetch(`${API_BASE}/big-tournaments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(tournamentData)
