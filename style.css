@@ -396,10 +396,28 @@ input, textarea {
 }
 
 .calendar-grid {
+    width: 100%;
+}
+
+.calendar-header {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 8px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
+}
+
+.calendar-day-header {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--tg-theme-hint-color, #7f8c8d);
+    padding: 8px 0;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
 }
 
 .calendar-day {
@@ -412,26 +430,43 @@ input, textarea {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: var(--tg-theme-hint-color, #f8f9fa);
+    background: var(--tg-theme-secondary-bg-color, #f8f9fa);
     color: var(--tg-theme-text-color, #666666);
+    border: 1px solid rgba(0,0,0,0.05);
 }
 
-.calendar-day:hover {
+.calendar-day.empty {
+    background: transparent;
+    border: none;
+    cursor: default;
+}
+
+.calendar-day:not(.empty):hover {
     background: var(--tg-theme-button-color, #3498db);
     color: white;
     transform: scale(1.05);
 }
 
-.calendar-day.has-games {
+.calendar-day.has-game {
     background: var(--tg-theme-button-color, #3498db);
     color: white;
-    animation: pulse 2s infinite;
+    font-weight: 700;
+    position: relative;
+}
+
+.calendar-day.has-game::after {
+    content: '🎮';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 8px;
 }
 
 .calendar-day.today {
     background: var(--tg-theme-accent-text-color, #ff6b35);
     color: white;
     font-weight: 700;
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.3);
 }
 
 /* Список игр */
