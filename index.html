@@ -1,15 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Club</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Главная страница -->
+        <div class="tab-content active" id="home">
+            <!-- Компактный хедер -->
+            <div class="header-compact">
+                <div class="header-user">
+                    <img src="https://via.placeholder.com/48" alt="Avatar" class="header-avatar" id="headerAvatar">
+                    <div>
+                        <div class="header-greeting">Привет,</div>
+                        <div class="header-name" id="headerName">Игрок</div>
+                    </div>
+                </div>
+                <button class="header-menu-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/>
+                    </svg>
+                </button>
+            </div>
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Redesign Telegram Mini App (Copy)</title>
-    </head>
+            <div class="welcome-section">
+                <h2 class="welcome-title">Готовы к игре?</h2>
+                <p class="welcome-subtitle">До следующей игры <span id="timeLeft">0ч 0м</span></p>
+            </div>
 
-    <body>
-      <div id="root"></div>
-      <script type="module" src="/src/main.tsx"></script>
-    </body>
-  </html>
-  
+            <!-- Основной контент -->
+            <div class="home-content">
+                <!-- Карточки турниров -->
+                <div class="tournament-grid">
+                    <!-- Главный турнир -->
+                    <div class="tournament-card tournament-primary">
+                        <div class="tournament-players">
+                            <div class="player-dot"></div>
+                            <div class="player-dot"></div>
+                            <div class="player-dot"></div>
+                        </div>
+                        <div class="tournament-info">
+                            <div class="tournament-type">Texas Hold'em</div>
+                            <div class="tournament-time">19:00</div>
+                        </div>
+                        <button class="tournament-arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Второй турнир -->
+                    <div class="tournament-card tournament-secondary">
+                        <div class="tournament-players">
+                            <div class="player-dot gray"></div>
+                            <div class="player-dot gray"></div>
+                        </div>
+                        <div class="tournament-info">
+                            <div class="tournament-type gray">Omaha</div>
+                            <div class="tournament-time">20:30</div>
+                        </div>
+                        <button class="tournament-arrow">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Карточка статистики -->
+                <div class="stats-card">
+                    <div class="stats-label">Ваша активность</div>
+                    <div class="stats-main">
+                        <div>
+                            <div class="stats-number" id="gamesPlayed">12</div>
+                            <div class="stats-caption">Игр сыграно</div>
+                        </div>
+                        <div class="stats-chart">
+                            <div class="chart-bar" style="height: 40%"></div>
+                            <div class="chart-bar" style="height: 60%"></div>
+                            <div class="chart-bar" style="height: 45%"></div>
+                            <div class="chart-bar" style="height: 70%"></div>
+                            <div class="chart-bar" style="height: 55%"></div>
+                            <div class="chart-bar" style="height: 80%"></div>
+                            <div class="chart-bar" style="height: 65%"></div>
+                        </div>
+                    </div>
+                    <div class="stats-footer">
+                        <div><span class="label">Побед:</span> <span id="winsCount">8</span></div>
+                        <div><span class="label">Призы:</span> <span id="prizesTotal">45K₽</span></div>
+                    </div>
+                </div>
+
+                <!-- Быстрые действия -->
+                <div class="quick-actions">
+                    <div class="action-item" onclick="switchTab('rating')">
+                        <div class="action-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                        </div>
+                        <div class="action-label">Рейтинг</div>
+                    </div>
+
+                    <div class="action-item" onclick="switchTab('profile')">
+                        <div class="action-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                            </svg>
+                        </div>
+                        <div class="action-label">Игроки</div>
+                    </div>
+
+                    <div class="action-item" onclick="switchTab('games')">
+                        <div class="action-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                        <div class="action-label">История</div>
+                    </div>
+                </div>
+
+                <!-- Информация о клубе -->
+                <div class="club-info-card">
+                    <h3>О клубе</h3>
+                    <p>Премиальный покер-клуб для настоящих ценителей игры</p>
+                    <button class="link-btn">
+                        Подробнее
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="m9 18 6-6-6-6"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Остальные вкладки (Games, Tournaments, Rating, Profile, Admin) -->
+        <div class="tab-content" id="games">
+            <div class="section-header">
+                <h2>🎮 Игры</h2>
+            </div>
+            <div id="gamesList" class="games-list"></div>
+        </div>
+
+        <div class="tab-content" id="tournaments">
+            <div class="section-header">
+                <h2>🏆 Турниры</h2>
+            </div>
+            <div id="tournamentsList" class="tournaments-list"></div>
+        </div>
+
+        <div class="tab-content" id="rating">
+            <div class="section-header">
+                <h2>📊 Рейтинг</h2>
+            </div>
+            <div id="ratingList" class="rating-list"></div>
+        </div>
+
+        <div class="tab-content" id="profile">
+            <div class="section-header">
+                <h2>👤 Профиль</h2>
+            </div>
+            <div id="profileContent" class="profile-content"></div>
+        </div>
+
+        <div class="tab-content" id="admin">
+            <div class="section-header">
+                <h2>👑 Админ-панель</h2>
+            </div>
+            <div id="adminContent" class="admin-content"></div>
+        </div>
+    </div>
+
+    <!-- Нижняя навигация -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-tab="home" onclick="switchTab('home')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Главная</span>
+        </button>
+        <button class="nav-btn" data-tab="games" onclick="switchTab('games')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="6" x2="10" y1="12" y2="12"/><line x1="8" x2="8" y1="10" y2="14"/>
+                <line x1="15" x2="15.01" y1="13" y2="13"/><line x1="18" x2="18.01" y1="11" y2="11"/>
+                <rect width="20" height="12" x="2" y="6" rx="2"/>
+            </svg>
+            <span>Игры</span>
+        </button>
+        <button class="nav-btn" data-tab="tournaments" onclick="switchTab('tournaments')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+            <span>Турниры</span>
+        </button>
+        <button class="nav-btn" data-tab="rating" onclick="switchTab('rating')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>
+            </svg>
+            <span>Рейтинг</span>
+        </button>
+        <button class="nav-btn" data-tab="profile" onclick="switchTab('profile')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+            <span>Профиль</span>
+        </button>
+        <button class="nav-btn" data-tab="admin" id="adminBtn" style="display: none;" onclick="switchTab('admin')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M3 16h18"/>
+            </svg>
+            <span>Админ</span>
+        </button>
+    </nav>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

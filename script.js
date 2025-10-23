@@ -1,5 +1,5 @@
 // ============================================
-// POKER CLUB MINI APP - ПОЛНАЯ ВЕРСИЯ V3.0
+// POKER CLUB MINI APP - NEW DESIGN
 // ============================================
 
 const tg = window.Telegram?.WebApp || {};
@@ -11,8 +11,7 @@ const appData = {
     isAdmin: false,
     registeredUsers: [],
     tournaments: [],
-    games: [],
-    selectedTournamentId: null
+    games: []
 };
 
 // ============================================
@@ -20,14 +19,10 @@ const appData = {
 // ============================================
 
 const API = {
-    // Пользователи
     async getUsers() {
-        console.log('🔍 API.getUsers()');
         const response = await fetch(`${API_BASE}/users`);
         if (!response.ok) throw new Error('Ошибка загрузки пользователей');
-        const data = await response.json();
-        console.log('✅ Пользователи:', data.length);
-        return data;
+        return await response.json();
     },
 
     async getUserByTelegramId(telegramId) {
@@ -46,28 +41,13 @@ const API = {
         return await response.json();
     },
 
-    async updateUser(userId, userData) {
-        const response = await fetch(`${API_BASE}/users/${userId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
-        });
-        if (!response.ok) throw new Error('Ошибка обновления пользователя');
+    async getBigTournaments() {
+        const response = await fetch(`${API_BASE}/big-tournaments`);
+        if (!response.ok) throw new Error('Ошибка загрузки турниров');
         return await response.json();
     },
 
-    // Турниры
-    async getBigTournaments() {
-        console.log('🔍 API.getBigTournaments()');
-        const response = await fetch(`${API_BASE}/big-tournaments`);
-        if (!response.ok) throw new Error('Ошибка загрузки турниров');
-        const data = await response.json();
-        console.log('✅ Турниры:', data.length);
-        return data;
-    },
-
     async createBigTournament(tournamentData) {
-        console.log('📤 API.createBigTournament:', tournamentData);
         const response = await fetch(`${API_BASE}/big-tournaments`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -77,982 +57,455 @@ const API = {
             const error = await response.json();
             throw new Error(error.error || 'Ошибка создания турнира');
         }
-        const result = await response.json();
-        console.log('✅ Турнир создан:', result);
-        return result;
+        return await response.json();
     },
 
-    // Игры
     async getGames(tournamentId = null) {
-        console.log('🔍 API.getGames(), tournamentId:', tournamentId);
         const url = tournamentId 
             ? `${API_BASE}/games?tournamentId=${tournamentId}`
             : `${API_BASE}/games`;
         const response = await fetch(url);
         if (!response.ok) throw new Error('Ошибка загрузки игр');
-        const data = await response.json();
-        console.log('✅ Игры:', data.length);
-        return data;
+        return await response.json();
     },
 
     async createGame(gameData) {
-        console.log('📤 API.createGame:', gameData);
         const response = await fetch(`${API_BASE}/games`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(gameData)
         });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Ошибка создания игры');
-        }
-        const result = await response.json();
-        console.log('✅ Игра создана:', result);
-        return result;
-    },
-
-    async updateGameStatus(gameId, status) {
-        const response = await fetch(`${API_BASE}/games/${gameId}/status`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status })
-        });
-        if (!response.ok) throw new Error('Ошибка обновления статуса игры');
+        if (!response.ok) throw new Error('Ошибка создания игры');
         return await response.json();
     },
 
-    // Регистрация на игры
-    async registerForGame(gameId, userId) {
-        console.log('📤 API.registerForGame:', { gameId, userId });
-        const response = await fetch(`${API_BASE}/game-registrations`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ gameId, userId })
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Ошибка регистрации');
-        }
-        return await response.json();
-    },
-
-    async cancelGameRegistration(gameId, userId) {
-        console.log('📤 API.cancelGameRegistration:', { gameId, userId });
-        const response = await fetch(`${API_BASE}/game-registrations/${gameId}/${userId}`, {
-            method: 'DELETE'
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Ошибка отмены');
-        }
-        return await response.json();
-    },
-
-    async markGamePayment(gameId, userId, isPaid) {
-        console.log('📤 API.markGamePayment:', { gameId, userId, isPaid });
-        const response = await fetch(`${API_BASE}/game-registrations/${gameId}/${userId}/payment`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isPaid })
-        });
-        if (!response.ok) throw new Error('Ошибка обновления оплаты');
-        return await response.json();
-    },
-
-    // Результаты игр
-    async saveGameResults(gameId, results) {
-        console.log('📤 API.saveGameResults:', { gameId, results });
-        const response = await fetch(`${API_BASE}/game-results/${gameId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ results })
-        });
-        if (!response.ok) throw new Error('Ошибка сохранения результатов');
-        return await response.json();
-    },
-
-    async getGameResults(gameId) {
-        const response = await fetch(`${API_BASE}/game-results/${gameId}`);
-        if (!response.ok) throw new Error('Ошибка загрузки результатов');
-        return await response.json();
-    },
-
-    // Турнирная таблица
-    async getTournamentStandings(tournamentId) {
-        console.log('🔍 API.getTournamentStandings:', tournamentId);
-        const response = await fetch(`${API_BASE}/tournament-standings/${tournamentId}`);
-        if (!response.ok) throw new Error('Ошибка загрузки таблицы');
-        const data = await response.json();
-        console.log('✅ Таблица загружена:', data.length);
-        return data;
-    },
-
-    // История игр пользователя
-    async getUserGameHistory(userId, tournamentId = null) {
-        const url = tournamentId
-            ? `${API_BASE}/user-game-history/${userId}?tournamentId=${tournamentId}`
-            : `${API_BASE}/user-game-history/${userId}`;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Ошибка загрузки истории');
-        return await response.json();
-    },
-
-    // Статистика
     async getStats() {
-        const response = await fetch(`${API_BASE}/admin/stats`);
+        const response = await fetch(`${API_BASE}/stats`);
         if (!response.ok) throw new Error('Ошибка загрузки статистики');
+        return await response.json();
+    },
+
+    async getTournamentStandings(tournamentId) {
+        const response = await fetch(`${API_BASE}/tournament-standings/${tournamentId}`);
+        if (!response.ok) throw new Error('Ошибка загрузки standings');
         return await response.json();
     }
 };
 
 // ============================================
-// ИНИЦИАЛИЗАЦИЯ
+// НАВИГАЦИЯ
 // ============================================
 
-async function initApp() {
-    try {
-        console.log('🚀 Инициализация приложения...');
-        
-        // Инициализация Telegram WebApp
-        if (tg && tg.expand) {
-            try {
-                tg.ready();
-                tg.expand();
-                tg.enableClosingConfirmation();
-            } catch (e) {
-                console.warn('Telegram API недоступен:', e);
-            }
-        }
+function switchTab(tabName) {
+    // Убираем active у всех вкладок
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
 
-        // Применяем тему
-        applyTheme();
+    // Добавляем active для выбранной
+    const tab = document.getElementById(tabName);
+    const btn = document.querySelector(`.nav-btn[data-tab="${tabName}"]`);
+    
+    if (tab) tab.classList.add('active');
+    if (btn) btn.classList.add('active');
 
-        // Проверяем авторизацию
-        await checkAuthentication();
-
-        console.log('✅ Приложение инициализировано');
-    } catch (error) {
-        console.error('❌ Ошибка инициализации:', error);
-    }
+    // Загружаем данные для вкладки
+    loadTabData(tabName);
 }
 
-async function checkAuthentication() {
+async function loadTabData(tabName) {
     try {
-        const user = tg.initDataUnsafe?.user;
-        
-        if (!user) {
-            console.log('👤 Telegram пользователь не найден, используем тестовые данные');
-            showLoginModal();
-            return;
-        }
-
-        console.log('👤 Telegram пользователь:', user);
-
-        // Проверяем, есть ли пользователь в БД
-        const existingUser = await API.getUserByTelegramId(user.id);
-
-        if (existingUser) {
-            appData.currentUser = existingUser;
-            appData.isAdmin = existingUser.gameNickname === 'admin';
-            console.log('✅ Пользователь найден:', existingUser.gameNickname);
-            await loadInitialData();
-        } else {
-            console.log('📝 Пользователь не найден, показываем регистрацию');
-            showRegistrationModal();
+        switch(tabName) {
+            case 'home':
+                await loadHomeData();
+                break;
+            case 'games':
+                await loadGames();
+                break;
+            case 'tournaments':
+                await loadTournaments();
+                break;
+            case 'rating':
+                await loadRating();
+                break;
+            case 'profile':
+                await loadProfile();
+                break;
+            case 'admin':
+                if (appData.isAdmin) {
+                    await loadAdminPanel();
+                }
+                break;
         }
     } catch (error) {
-        console.error('❌ Ошибка авторизации:', error);
-        showLoginModal();
-    }
-}
-
-async function loadInitialData() {
-    try {
-        console.log('📦 Загрузка начальных данных...');
-        await loadUserData();
-        updateNavigation();
-        console.log('✅ Начальные данные загружены');
-    } catch (error) {
-        console.error('❌ Ошибка загрузки данных:', error);
+        console.error('Ошибка загрузки данных:', error);
+        showAlert(`Ошибка: ${error.message}`);
     }
 }
 
 // ============================================
-// ЗАГРУЗКА ДАННЫХ
+// ЗАГРУЗКА ДАННЫХ ГЛАВНОЙ СТРАНИЦЫ
 // ============================================
 
-async function loadUserData() {
-    try {
-        if (!appData.currentUser) return;
-
-        console.log('👤 Загрузка данных пользователя...');
-
-        // Обновляем UI
-        const elements = {
-            userName: document.getElementById('userName'),
-            userRank: document.getElementById('userRank'),
-            profileName: document.getElementById('profileName'),
-            userAvatar: document.getElementById('userAvatar'),
-            profileAvatar: document.getElementById('profileAvatar')
-        };
-
-        if (elements.userName) elements.userName.textContent = appData.currentUser.gameNickname;
-        if (elements.userRank) elements.userRank.textContent = 'Игрок';
-        if (elements.profileName) elements.profileName.textContent = appData.currentUser.gameNickname;
-
-        const avatar = appData.currentUser.avatar || '👤';
-        if (elements.userAvatar) elements.userAvatar.textContent = avatar;
-        if (elements.profileAvatar) elements.profileAvatar.textContent = avatar;
-
-        console.log('✅ Данные пользователя загружены');
-    } catch (error) {
-        console.error('❌ Ошибка загрузки данных пользователя:', error);
+async function loadHomeData() {
+    updateTimer();
+    
+    if (appData.currentUser) {
+        document.getElementById('headerName').textContent = appData.currentUser.game_nickname || 'Игрок';
+        if (appData.currentUser.avatar_url) {
+            document.getElementById('headerAvatar').src = appData.currentUser.avatar_url;
+        }
     }
 }
 
-async function loadTournaments() {
-    try {
-        console.log('🏆 Загрузка турниров...');
-        appData.tournaments = await API.getBigTournaments();
-        renderTournaments();
-        console.log('✅ Турниры загружены');
-    } catch (error) {
-        console.error('❌ Ошибка загрузки турниров:', error);
-        showAlert('Ошибка загрузки турниров: ' + error.message);
-    }
-}
-
-async function loadGames(tournamentId = null) {
-    try {
-        console.log('🎮 Загрузка игр...');
-        appData.games = await API.getGames(tournamentId);
-        displayGames(appData.games);
-        renderCalendar();
-        await loadMyTournamentStanding();
-        console.log('✅ Игры загружены');
-    } catch (error) {
-        console.error('❌ Ошибка загрузки игр:', error);
-        showAlert('Ошибка загрузки игр: ' + error.message);
-    }
-}
-
-async function loadAllUsers() {
-    try {
-        console.log('👥 Загрузка пользователей...');
-        appData.registeredUsers = await API.getUsers();
-        console.log('✅ Пользователи загружены:', appData.registeredUsers.length);
-    } catch (error) {
-        console.error('❌ Ошибка загрузки пользователей:', error);
-    }
-}
-
-async function loadAdminData() {
-    try {
-        if (!appData.isAdmin) return;
-
-        console.log('👑 Загрузка данных админа...');
+function updateTimer() {
+    const calculateTimeLeft = () => {
+        const now = new Date();
+        const nextGame = new Date();
+        nextGame.setHours(19, 0, 0, 0);
         
-        // Загружаем пользователей
-        await loadAllUsers();
+        if (now.getHours() >= 19) {
+            nextGame.setDate(nextGame.getDate() + 1);
+        }
         
-        // Загружаем статистику
-        const stats = await API.getStats();
+        const diff = nextGame.getTime() - now.getTime();
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         
-        document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
-        document.getElementById('totalTournaments').textContent = stats.totalTournaments || 0;
-        document.getElementById('activeGames').textContent = stats.activeGames || 0;
-        
-        console.log('✅ Данные админа загружены');
-    } catch (error) {
-        console.error('❌ Ошибка загрузки данных админа:', error);
-    }
-}
+        document.getElementById('timeLeft').textContent = `${hours}ч ${minutes}м`;
+    };
 
-// ============================================
-// ТУРНИРЫ
-// ============================================
-
-function renderTournaments() {
-    const container = document.getElementById('tournamentsList');
-    if (!container) return;
-
-    if (appData.tournaments.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #7f8c8d;">
-                <div style="font-size: 48px; margin-bottom: 16px;">🏆</div>
-                <p>Турниров пока нет</p>
-            </div>
-        `;
-        return;
-    }
-
-    container.innerHTML = appData.tournaments.map(tournament => `
-        <div class="tournament-card">
-            <div class="tournament-header">
-                <h3>${tournament.name}</h3>
-                <span class="tournament-status ${tournament.status}">${getStatusText(tournament.status)}</span>
-            </div>
-            <div class="tournament-info">
-                <p>${tournament.description || 'Турнир покерного клуба'}</p>
-                <div class="info-item">
-                    <i class="fas fa-calendar"></i>
-                    <span>Начало: ${formatDate(tournament.start_date)}</span>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-trophy"></i>
-                    <span>Топ-${tournament.top_players_count} в финал</span>
-                </div>
-            </div>
-            <div class="tournament-actions">
-                <button class="btn-join" onclick="selectTournament(${tournament.id})">
-                    <i class="fas fa-eye"></i>
-                    <span>Посмотреть</span>
-                </button>
-                ${appData.isAdmin ? `
-                    <button class="btn-secondary" onclick="showTournamentStandings(${tournament.id})">
-                        <i class="fas fa-list"></i>
-                        <span>Таблица</span>
-                    </button>
-                ` : ''}
-            </div>
-        </div>
-    `).join('');
-}
-
-async function createTournament() {
-    if (!appData.isAdmin) return;
-
-    const name = document.getElementById('tournamentName').value.trim();
-    const description = document.getElementById('tournamentDescription').value.trim();
-
-    if (!name) {
-        showAlert('Введите название турнира!');
-        return;
-    }
-
-    try {
-        const tournamentData = {
-            name,
-            description,
-            startDate: new Date().toISOString(),
-            topPlayersCount: 20
-        };
-
-        console.log('📤 Создание турнира:', tournamentData);
-
-        await API.createBigTournament(tournamentData);
-        
-        showAlert('Турнир создан успешно!');
-        closeModal('addTournamentModal');
-        
-        // Перезагружаем турниры
-        await loadTournaments();
-        
-        // Очищаем форму
-        document.getElementById('tournamentName').value = '';
-        document.getElementById('tournamentDescription').value = '';
-    } catch (error) {
-        console.error('❌ Ошибка создания турнира:', error);
-        showAlert('Ошибка создания турнира: ' + error.message);
-    }
-}
-
-function selectTournament(tournamentId) {
-    appData.selectedTournamentId = tournamentId;
-    switchTab('games');
-    loadGames(tournamentId);
+    calculateTimeLeft();
+    setInterval(calculateTimeLeft, 60000);
 }
 
 // ============================================
 // ИГРЫ
 // ============================================
 
-function displayGames(games) {
-    const gamesList = document.getElementById('gamesList');
-    if (!gamesList) return;
+async function loadGames() {
+    try {
+        appData.games = await API.getGames();
+        displayGames();
+    } catch (error) {
+        console.error('Ошибка загрузки игр:', error);
+    }
+}
 
-    if (games.length === 0) {
-        gamesList.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #7f8c8d;">
-                <div style="font-size: 48px; margin-bottom: 16px;">🎮</div>
-                <p>Игр пока нет</p>
-            </div>
-        `;
+function displayGames() {
+    const container = document.getElementById('gamesList');
+    if (!container) return;
+
+    if (appData.games.length === 0) {
+        container.innerHTML = '<div class="list-card">Игры не найдены</div>';
         return;
     }
 
-    gamesList.innerHTML = games.map(game => createGameCard(game)).join('');
+    container.innerHTML = appData.games.map(game => `
+        <div class="list-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600;">Игра #${game.game_number}</div>
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                        ${new Date(game.date).toLocaleString('ru-RU')}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">Статус</div>
+                    <div style="color: ${getStatusColor(game.status)};">${getStatusText(game.status)}</div>
+                </div>
+            </div>
+            <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
+                <div style="flex: 1;">
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Участники</div>
+                    <div>${game.current_players || 0}/${game.max_players}</div>
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Взнос</div>
+                    <div>${game.buyin_amount}₽</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
-function createGameCard(game) {
-    const gameDate = new Date(game.date);
-    const participantsCount = game.participants?.length || 0;
-    const isRegistered = game.participants?.some(p => p.user_id === appData.currentUser?.id);
+function getStatusColor(status) {
+    const colors = {
+        'upcoming': '#fbbf24',
+        'in_progress': '#10b981',
+        'finished': '#6b7280'
+    };
+    return colors[status] || '#6b7280';
+}
 
-    return `
-        <div class="game-card">
-            <div class="game-header">
-                <h4>Игра #${game.game_number}</h4>
-                <span class="game-status ${game.status}">${getGameStatusText(game.status)}</span>
+function getStatusText(status) {
+    const texts = {
+        'upcoming': 'Предстоящая',
+        'in_progress': 'Идёт',
+        'finished': 'Завершена'
+    };
+    return texts[status] || status;
+}
+
+// ============================================
+// ТУРНИРЫ
+// ============================================
+
+async function loadTournaments() {
+    try {
+        appData.tournaments = await API.getBigTournaments();
+        displayTournaments();
+    } catch (error) {
+        console.error('Ошибка загрузки турниров:', error);
+    }
+}
+
+function displayTournaments() {
+    const container = document.getElementById('tournamentsList');
+    if (!container) return;
+
+    if (appData.tournaments.length === 0) {
+        container.innerHTML = '<div class="list-card">Турниры не найдены</div>';
+        return;
+    }
+
+    container.innerHTML = appData.tournaments.map(tournament => `
+        <div class="list-card">
+            <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem;">
+                ${tournament.name}
             </div>
-            <div class="game-info">
-                <div class="info-item">
-                    <i class="fas fa-calendar"></i>
-                    <span>${formatDate(game.date)}</span>
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                ${tournament.description || 'Описание отсутствует'}
+            </div>
+            <div style="display: flex; gap: 1rem; font-size: 0.875rem;">
+                <div>
+                    <span style="color: var(--text-secondary);">Старт:</span> 
+                    ${new Date(tournament.start_date).toLocaleDateString('ru-RU')}
                 </div>
-                <div class="info-item">
-                    <i class="fas fa-users"></i>
-                    <span>${participantsCount}/${game.max_players} участников</span>
-                </div>
-                <div class="info-item">
-                    <i class="fas fa-money-bill"></i>
-                    <span>Взнос: ${game.buyin_amount} ₽</span>
+                <div>
+                    <span style="color: var(--text-secondary);">Топ:</span> 
+                    ${tournament.top_players_count}
                 </div>
             </div>
-            <div class="game-actions">
-                ${createGameActions(game, isRegistered)}
+        </div>
+    `).join('');
+}
+
+// ============================================
+// РЕЙТИНГ
+// ============================================
+
+async function loadRating() {
+    const container = document.getElementById('ratingList');
+    if (!container) return;
+
+    if (appData.tournaments.length === 0) {
+        await loadTournaments();
+    }
+
+    if (appData.tournaments.length === 0) {
+        container.innerHTML = '<div class="list-card">Нет активных турниров</div>';
+        return;
+    }
+
+    try {
+        const standings = await API.getTournamentStandings(appData.tournaments[0].id);
+        displayRating(standings);
+    } catch (error) {
+        console.error('Ошибка загрузки рейтинга:', error);
+        container.innerHTML = '<div class="list-card">Ошибка загрузки рейтинга</div>';
+    }
+}
+
+function displayRating(standings) {
+    const container = document.getElementById('ratingList');
+    if (!container) return;
+
+    if (standings.length === 0) {
+        container.innerHTML = '<div class="list-card">Рейтинг пуст</div>';
+        return;
+    }
+
+    container.innerHTML = standings.map((standing, index) => `
+        <div class="list-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="font-size: 1.5rem; font-weight: 700; color: ${index < 3 ? 'var(--accent-red)' : 'var(--text-secondary)'};">
+                        #${index + 1}
+                    </div>
+                    <div>
+                        <div style="font-weight: 600;">${standing.user_name}</div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                            ${standing.games_played} игр
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 1.25rem; font-weight: 700;">${standing.total_points}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">очков</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ============================================
+// ПРОФИЛЬ
+// ============================================
+
+async function loadProfile() {
+    const container = document.getElementById('profileContent');
+    if (!container) return;
+
+    if (!appData.currentUser) {
+        container.innerHTML = '<div class="list-card">Пользователь не авторизован</div>';
+        return;
+    }
+
+    container.innerHTML = `
+        <div class="list-card" style="text-align: center;">
+            <img src="${appData.currentUser.avatar_url || 'https://via.placeholder.com/100'}" 
+                 alt="Avatar" 
+                 style="width: 100px; height: 100px; border-radius: 50%; margin: 0 auto 1rem; border: 3px solid var(--accent-red);">
+            <div style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">
+                ${appData.currentUser.game_nickname}
+            </div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                @${appData.currentUser.telegram_username || 'username'}
+            </div>
+        </div>
+
+        <div class="list-card">
+            <div style="font-weight: 600; margin-bottom: 1rem;">Статистика</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center;">
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">0</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Игр</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">0</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Побед</div>
+                </div>
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: 700;">0</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Очков</div>
+                </div>
             </div>
         </div>
     `;
 }
 
-function createGameActions(game, isRegistered) {
-    const now = new Date();
-    const gameDate = new Date(game.date);
-    const isUpcoming = gameDate > now && game.status === 'upcoming';
+// ============================================
+// АДМИН-ПАНЕЛЬ
+// ============================================
 
-    let actions = '';
+async function loadAdminPanel() {
+    const container = document.getElementById('adminContent');
+    if (!container) return;
 
-    if (isUpcoming) {
-        if (isRegistered) {
-            actions += `
-                <button class="game-btn danger" onclick="cancelGameRegistration(${game.id})">
-                    <i class="fas fa-times"></i>
-                    <span>Отменить</span>
-                </button>
-            `;
-        } else {
-            actions += `
-                <button class="game-btn primary" onclick="registerForGame(${game.id})">
-                    <i class="fas fa-plus"></i>
-                    <span>Записаться</span>
-                </button>
-            `;
-        }
-    }
-
-    if (appData.isAdmin) {
-        actions += `
-            <button class="game-btn secondary" onclick="showGameDetails(${game.id})">
-                <i class="fas fa-eye"></i>
-                <span>Детали</span>
-            </button>
-        `;
-        
-        if (game.status === 'finished' || game.status === 'in_progress') {
-            actions += `
-                <button class="game-btn secondary" onclick="showGameResults(${game.id})">
-                    <i class="fas fa-trophy"></i>
-                    <span>Результаты</span>
-                </button>
-            `;
-        }
-    }
-
-    return actions;
-}
-
-// Регистрация на игру
-async function registerForGame(gameId) {
     try {
-        await API.registerForGame(gameId, appData.currentUser.id);
-        showAlert('Вы успешно записались на игру!');
-        await loadGames(appData.selectedTournamentId);
-    } catch (error) {
-        console.error('❌ Ошибка регистрации:', error);
-        showAlert('Ошибка: ' + error.message);
-    }
-}
-
-// Отмена регистрации
-async function cancelGameRegistration(gameId) {
-    try {
-        await API.cancelGameRegistration(gameId, appData.currentUser.id);
-        showAlert('Регистрация отменена');
-        await loadGames(appData.selectedTournamentId);
-    } catch (error) {
-        console.error('❌ Ошибка отмены:', error);
-        showAlert('Ошибка: ' + error.message);
-    }
-}
-
-// ============================================
-// КАЛЕНДАРЬ ИГР
-// ============================================
-
-function renderCalendar() {
-    const calendarGrid = document.getElementById('calendarGrid');
-    if (!calendarGrid) return;
-
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    // Получаем первый и последний день месяца
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const lastDay = new Date(currentYear, currentMonth + 1, 0);
-    
-    // Дни недели
-    const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-    
-    let html = '<div class="calendar-header">';
-    daysOfWeek.forEach(day => {
-        html += `<div class="calendar-day-header">${day}</div>`;
-    });
-    html += '</div><div class="calendar-days">';
-    
-    // Пустые ячейки до первого дня
-    const firstDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-    for (let i = 0; i < firstDayOfWeek; i++) {
-        html += '<div class="calendar-day empty"></div>';
-    }
-    
-    // Дни месяца
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-        const date = new Date(currentYear, currentMonth, day);
-        const hasGame = appData.games.some(game => {
-            const gameDate = new Date(game.date);
-            return gameDate.getDate() === day && 
-                   gameDate.getMonth() === currentMonth && 
-                   gameDate.getFullYear() === currentYear;
-        });
+        const stats = await API.getStats();
         
-        const isToday = day === now.getDate();
-        const classes = ['calendar-day'];
-        if (isToday) classes.push('today');
-        if (hasGame) classes.push('has-game');
-        
-        html += `<div class="${classes.join(' ')}">${day}</div>`;
-    }
-    
-    html += '</div>';
-    calendarGrid.innerHTML = html;
-}
-
-// ============================================
-// ТУРНИРНАЯ ТАБЛИЦА
-// ============================================
-
-async function showTournamentStandings(tournamentId) {
-    try {
-        const standings = await API.getTournamentStandings(tournamentId);
-        const modal = document.getElementById('tournamentStandingsModal');
-        const list = document.getElementById('standingsList');
-        
-        if (standings.length === 0) {
-            list.innerHTML = '<p style="text-align: center; padding: 40px;">Нет данных</p>';
-        } else {
-            list.innerHTML = standings.map((standing, index) => `
-                <div class="standing-item ${index < 20 ? 'qualified' : ''}">
-                    <div class="standing-position">${index + 1}</div>
-                    <div class="standing-info">
-                        <div class="standing-name">${standing.game_nickname}</div>
-                        <div class="standing-stats">
-                            ${standing.total_points} очков • ${standing.games_played} игр
-                        </div>
-                    </div>
-                    ${index < 20 ? '<div class="qualified-badge">✓ В финале</div>' : ''}
+        container.innerHTML = `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
+                <div class="list-card" style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700;">${stats.totalUsers || 0}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Пользователей</div>
                 </div>
-            `).join('');
-        }
-        
-        modal.style.display = 'block';
-    } catch (error) {
-        console.error('❌ Ошибка загрузки таблицы:', error);
-        showAlert('Ошибка загрузки таблицы');
-    }
-}
-
-async function loadMyTournamentStanding() {
-    if (!appData.selectedTournamentId || !appData.currentUser) return;
-    
-    try {
-        const standings = await API.getTournamentStandings(appData.selectedTournamentId);
-        const myStanding = standings.find(s => s.user_id === appData.currentUser.id);
-        const myPosition = standings.findIndex(s => s.user_id === appData.currentUser.id) + 1;
-        
-        const container = document.getElementById('myTournamentStanding');
-        if (!container) return;
-        
-        if (myStanding) {
-            container.style.display = 'block';
-            document.getElementById('myPosition').textContent = myPosition;
-            document.getElementById('myPoints').textContent = myStanding.total_points;
-            document.getElementById('myGames').textContent = myStanding.games_played;
-            
-            const statusBadge = document.getElementById('myStatus');
-            if (myPosition <= 20) {
-                statusBadge.innerHTML = '<span class="status-badge success">✅ В финале</span>';
-            } else {
-                statusBadge.innerHTML = '<span class="status-badge">❌ Не в финале</span>';
-            }
-        } else {
-            container.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('❌ Ошибка загрузки позиции:', error);
-    }
-}
-
-// ============================================
-// АДМИНКА
-// ============================================
-
-async function showUsersList() {
-    if (!appData.isAdmin) return;
-    
-    try {
-        await loadAllUsers();
-        
-        const modal = document.getElementById('usersListModal');
-        const list = document.getElementById('usersList');
-        const title = modal.querySelector('.modal-header h2');
-        
-        title.textContent = `Все пользователи (${appData.registeredUsers.length})`;
-        
-        if (appData.registeredUsers.length === 0) {
-            list.innerHTML = '<p style="text-align: center; padding: 40px;">Нет пользователей</p>';
-        } else {
-            list.innerHTML = appData.registeredUsers.map(user => `
-                <div class="user-item">
-                    <div class="user-avatar-small">${user.avatar || '👤'}</div>
-                    <div class="user-info-small">
-                        <div class="user-name-small">${user.game_nickname}</div>
-                        <div class="user-stats-small">Telegram ID: ${user.telegram_id}</div>
-                    </div>
+                <div class="list-card" style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700;">${stats.totalTournaments || 0}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Турниров</div>
                 </div>
-            `).join('');
-        }
-        
-        modal.style.display = 'block';
-    } catch (error) {
-        console.error('❌ Ошибка загрузки пользователей:', error);
-        showAlert('Ошибка загрузки пользователей');
-    }
-}
-
-function showAddTournamentModal() {
-    if (!appData.isAdmin) return;
-    document.getElementById('addTournamentModal').style.display = 'block';
-}
-
-async function showGameDetails(gameId) {
-    if (!appData.isAdmin) return;
-    
-    try {
-        const game = appData.games.find(g => g.id === gameId);
-        if (!game) return;
-        
-        const modal = document.getElementById('gameDetailsModal');
-        const details = document.getElementById('gameDetails');
-        const title = document.getElementById('gameDetailsTitle');
-        
-        title.textContent = `Игра #${game.game_number}`;
-        
-        // Получаем участников
-        const participants = game.participants || [];
-        
-        details.innerHTML = `
-            <div class="game-info-block">
-                <h3>Информация об игре</h3>
-                <p><strong>Дата:</strong> ${formatDate(game.date)}</p>
-                <p><strong>Взнос:</strong> ${game.buyin_amount} ₽</p>
-                <p><strong>Участников:</strong> ${participants.length}/${game.max_players}</p>
-            </div>
-            <div class="participants-block">
-                <h3>Участники (${participants.length})</h3>
-                <div class="participants-list">
-                    ${participants.length === 0 ? '<p>Нет участников</p>' : participants.map(p => `
-                        <div class="participant-item">
-                            <span>${p.game_nickname}</span>
-                            <label>
-                                <input type="checkbox" 
-                                       ${p.is_paid ? 'checked' : ''} 
-                                       onchange="togglePayment(${gameId}, ${p.user_id}, this.checked)">
-                                Оплачено
-                            </label>
-                        </div>
-                    `).join('')}
+                <div class="list-card" style="text-align: center;">
+                    <div style="font-size: 2rem; font-weight: 700;">${stats.activeGames || 0}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Активных игр</div>
                 </div>
             </div>
-            ${game.status === 'upcoming' ? `
-                <button class="btn-primary" onclick="startGame(${gameId})">
-                    <i class="fas fa-play"></i>
-                    <span>Начать игру</span>
-                </button>
-            ` : ''}
-        `;
-        
-        modal.style.display = 'block';
-    } catch (error) {
-        console.error('❌ Ошибка загрузки деталей:', error);
-        showAlert('Ошибка загрузки деталей игры');
-    }
-}
 
-async function showGameResults(gameId) {
-    if (!appData.isAdmin) return;
-    
-    try {
-        const game = appData.games.find(g => g.id === gameId);
-        if (!game) return;
-        
-        const modal = document.getElementById('gameResultsModal');
-        const form = document.getElementById('resultsForm');
-        
-        // Получаем участников, которые оплатили
-        const participants = game.participants?.filter(p => p.is_paid) || [];
-        
-        if (participants.length === 0) {
-            showAlert('Нет участников, которые оплатили взнос');
-            return;
-        }
-        
-        form.innerHTML = `
-            <h3>Игра #${game.game_number}</h3>
-            <p>Введите места участников:</p>
-            <div class="results-list">
-                ${participants.map((p, index) => `
-                    <div class="result-item">
-                        <span class="player-name">${p.game_nickname}</span>
-                        <select id="place_${p.user_id}" class="place-select">
-                            <option value="">Выберите место</option>
-                            ${Array.from({length: participants.length}, (_, i) => `
-                                <option value="${i + 1}">${i + 1} место</option>
-                            `).join('')}
-                        </select>
-                        <span class="points" id="points_${p.user_id}">0 очков</span>
-                    </div>
-                `).join('')}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button class="btn-primary" onclick="showCreateTournamentModal()">
+                    Создать турнир
+                </button>
+                <button class="btn-primary" onclick="showCreateGameModal()">
+                    Создать игру
+                </button>
             </div>
         `;
-        
-        // Добавляем обработчики для автоматического расчета очков
-        participants.forEach(p => {
-            const select = document.getElementById(`place_${p.user_id}`);
-            if (select) {
-                select.addEventListener('change', function() {
-                    updateResultPoints(p.user_id, this.value);
-                });
-            }
-        });
-        
-        modal.style.display = 'block';
-        
-        // Сохраняем gameId для использования при сохранении
-        modal.dataset.gameId = gameId;
     } catch (error) {
-        console.error('❌ Ошибка:', error);
-        showAlert('Ошибка отображения формы результатов');
+        console.error('Ошибка загрузки админ-панели:', error);
+        container.innerHTML = '<div class="list-card">Ошибка загрузки</div>';
     }
 }
 
-function updateResultPoints(userId, place) {
-    const pointsSpan = document.getElementById(`points_${userId}`);
-    if (!pointsSpan) return;
-    
-    const points = calculatePoints(parseInt(place));
-    pointsSpan.textContent = `${points} очков`;
-}
+// ============================================
+// МОДАЛЬНЫЕ ОКНА
+// ============================================
 
-function calculatePoints(place) {
-    const POINTS_SYSTEM = {
-        1: 300,
-        2: 240,
-        3: 195,
-        4: 150,
-        5: 150,
-        6: 90,
-        7: 90,
-        8: 90,
-        9: 90,
-        10: 90
+function showCreateTournamentModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Создать турнир</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="createTournamentForm">
+                <div class="form-group">
+                    <label class="form-label">Название</label>
+                    <input type="text" class="form-input" id="tournamentName" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Описание</label>
+                    <textarea class="form-textarea" id="tournamentDescription"></textarea>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Создать</button>
+            </form>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    document.getElementById('createTournamentForm').onsubmit = async (e) => {
+        e.preventDefault();
+        await createTournament();
+        modal.remove();
     };
-    
-    return POINTS_SYSTEM[place] || 30; // 11+ место = 30 очков
 }
 
-async function saveGameResults() {
+async function createTournament() {
     try {
-        const modal = document.getElementById('gameResultsModal');
-        const gameId = parseInt(modal.dataset.gameId);
-        
-        if (!gameId) {
-            showAlert('Ошибка: не найден ID игры');
+        const name = document.getElementById('tournamentName').value.trim();
+        const description = document.getElementById('tournamentDescription').value.trim();
+
+        if (!name) {
+            showAlert('Введите название турнира!');
             return;
         }
-        
-        const game = appData.games.find(g => g.id === gameId);
-        const participants = game.participants?.filter(p => p.is_paid) || [];
-        
-        // Собираем результаты
-        const results = [];
-        const usedPlaces = new Set();
-        
-        for (const p of participants) {
-            const placeSelect = document.getElementById(`place_${p.user_id}`);
-            if (!placeSelect || !placeSelect.value) {
-                showAlert(`Не указано место для ${p.game_nickname}`);
-                return;
-            }
-            
-            const place = parseInt(placeSelect.value);
-            
-            if (usedPlaces.has(place)) {
-                showAlert(`Место ${place} уже занято!`);
-                return;
-            }
-            
-            usedPlaces.add(place);
-            
-            results.push({
-                userId: p.user_id,
-                place: place,
-                points: calculatePoints(place)
-            });
-        }
-        
-        // Отправляем результаты на сервер
-        await API.saveGameResults(gameId, results);
-        
-        showAlert('Результаты сохранены успешно!');
-        closeModal('gameResultsModal');
-        
-        // Перезагружаем игры
-        await loadGames(appData.selectedTournamentId);
-        
+
+        await API.createBigTournament({
+            name,
+            description,
+            startDate: new Date().toISOString(),
+            topPlayersCount: 20
+        });
+
+        showAlert('Турнир создан!');
+        await loadTournaments();
+        await loadAdminPanel();
     } catch (error) {
-        console.error('❌ Ошибка сохранения результатов:', error);
-        showAlert('Ошибка сохранения результатов: ' + error.message);
+        showAlert(`Ошибка: ${error.message}`);
     }
 }
 
-async function togglePayment(gameId, userId, isPaid) {
-    try {
-        await API.markGamePayment(gameId, userId, isPaid);
-        showAlert(isPaid ? 'Оплата отмечена' : 'Оплата снята');
-    } catch (error) {
-        console.error('❌ Ошибка обновления оплаты:', error);
-        showAlert('Ошибка обновления оплаты');
-    }
-}
-
-async function startGame(gameId) {
-    try {
-        // Обновляем статус игры на "in_progress"
-        await API.updateGameStatus(gameId, 'in_progress');
-        showAlert('Игра начата!');
-        closeModal('gameDetailsModal');
-        await loadGames(appData.selectedTournamentId);
-    } catch (error) {
-        console.error('❌ Ошибка:', error);
-        showAlert('Ошибка начала игры');
-    }
-}
-
-// ============================================
-// РЕГИСТРАЦИЯ И АВТОРИЗАЦИЯ
-// ============================================
-
-async function registerUser() {
-    const gameNickname = document.getElementById('gameNickname').value.trim();
-    const preferredGame = document.getElementById('preferredGame').value;
-
-    if (!gameNickname) {
-        showAlert('Введите никнейм!');
-        return;
-    }
-
-    try {
-        const user = tg.initDataUnsafe?.user || { id: Date.now(), first_name: 'Test User' };
-        
-        const userData = {
-            telegramId: user.id,
-            telegramName: user.first_name,
-            telegramUsername: user.username || '',
-            gameNickname: gameNickname,
-            preferredGame: preferredGame
-        };
-
-        const newUser = await API.createUser(userData);
-        appData.currentUser = newUser;
-        appData.isAdmin = gameNickname === 'admin';
-
-        closeModal('registrationModal');
-        await loadInitialData();
-        showAlert('Регистрация успешна!');
-    } catch (error) {
-        console.error('❌ Ошибка регистрации:', error);
-        showAlert('Ошибка регистрации: ' + error.message);
-    }
-}
-
-function loginAsUser() {
-    closeModal('loginModal');
-    showRegistrationModal();
-}
-
-function loginAsAdmin() {
-    appData.isAdmin = true;
-    appData.currentUser = { id: 1, gameNickname: 'admin', avatar: '👑' };
-    closeModal('loginModal');
-    loadInitialData();
-}
-
-function showLoginModal() {
-    document.getElementById('loginModal').style.display = 'block';
-}
-
-function showRegistrationModal() {
-    closeModal('loginModal');
-    document.getElementById('registrationModal').style.display = 'block';
-}
-
-// ============================================
-// ПЕРЕКЛЮЧЕНИЕ ТАБОВ
-// ============================================
-
-async function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
-    document.querySelectorAll('.nav-item, .nav-tab').forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    document.getElementById(tabName).classList.add('active');
-    document.querySelectorAll(`[data-tab="${tabName}"]`).forEach(el => {
-        el.classList.add('active');
-    });
-    
-    vibrate();
-    
-    // Загружаем данные для активной вкладки
-    switch(tabName) {
-        case 'home':
-            await loadUserData();
-            break;
-        case 'games':
-            await loadGames(appData.selectedTournamentId);
-            break;
-        case 'tournaments':
-            await loadTournaments();
-            break;
-        case 'admin':
-            await loadAdminData();
-            break;
-    }
+function showCreateGameModal() {
+    showAlert('Функция создания игры в разработке');
 }
 
 // ============================================
@@ -1060,112 +513,57 @@ async function switchTab(tabName) {
 // ============================================
 
 function showAlert(message) {
-    console.log('🔔', message);
-    if (tg && tg.showAlert) {
-        try {
-            tg.showAlert(message);
-        } catch (e) {
-            alert(message);
-        }
+    if (tg.showAlert) {
+        tg.showAlert(message);
     } else {
         alert(message);
     }
 }
 
-function vibrate() {
-    if (tg && tg.HapticFeedback) {
-        try {
-            tg.HapticFeedback.impactOccurred('light');
-        } catch (e) {
-            // Ignore
+// ============================================
+// ИНИЦИАЛИЗАЦИЯ
+// ============================================
+
+async function init() {
+    console.log('🚀 Инициализация приложения...');
+
+    // Инициализация Telegram WebApp
+    if (tg.ready) {
+        tg.ready();
+        tg.expand();
+    }
+
+    // Проверяем авторизацию
+    const telegramUser = tg.initDataUnsafe?.user;
+    if (telegramUser) {
+        let user = await API.getUserByTelegramId(telegramUser.id);
+        
+        if (!user) {
+            // Создаём нового пользователя
+            user = await API.createUser({
+                telegram_id: telegramUser.id.toString(),
+                telegram_username: telegramUser.username || '',
+                game_nickname: telegramUser.first_name || 'Игрок',
+                avatar_url: telegramUser.photo_url || ''
+            });
+        }
+        
+        appData.currentUser = user;
+        appData.isAdmin = user.role === 'admin';
+
+        // Показываем админ-кнопку если админ
+        if (appData.isAdmin) {
+            document.getElementById('adminBtn').style.display = 'flex';
         }
     }
+
+    // Загружаем начальные данные
+    await loadHomeData();
+    await loadTournaments();
+    
+    console.log('✅ Приложение готово!');
 }
 
-function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-function getStatusText(status) {
-    const statuses = {
-        active: 'Активен',
-        upcoming: 'Предстоящий',
-        finished: 'Завершён'
-    };
-    return statuses[status] || status;
-}
-
-function getGameStatusText(status) {
-    const statuses = {
-        upcoming: 'Предстоящая',
-        in_progress: 'Идёт сейчас',
-        finished: 'Завершена',
-        cancelled: 'Отменена'
-    };
-    return statuses[status] || status;
-}
-
-function updateNavigation() {
-    const adminTab = document.querySelector('[data-tab="admin"]');
-    if (adminTab) {
-        adminTab.style.display = appData.isAdmin ? 'flex' : 'none';
-    }
-}
-
-function applyTheme() {
-    if (tg && tg.themeParams) {
-        document.body.style.setProperty('--tg-theme-bg-color', tg.themeParams.bg_color || '#ffffff');
-        document.body.style.setProperty('--tg-theme-text-color', tg.themeParams.text_color || '#000000');
-        document.body.style.setProperty('--tg-theme-button-color', tg.themeParams.button_color || '#3498db');
-    }
-}
-
-// ============================================
-// EVENT LISTENERS
-// ============================================
-
-document.addEventListener('DOMContentLoaded', function() {
-    initApp();
-
-    // Навигация
-    document.querySelectorAll('.nav-item, .nav-tab').forEach(item => {
-        item.addEventListener('click', function() {
-            const tab = this.getAttribute('data-tab');
-            switchTab(tab);
-        });
-    });
-});
-
-// ============================================
-// ЭКСПОРТ ФУНКЦИЙ
-// ============================================
-
-window.switchTab = switchTab;
-window.createTournament = createTournament;
-window.selectTournament = selectTournament;
-window.registerForGame = registerForGame;
-window.cancelGameRegistration = cancelGameRegistration;
-window.showTournamentStandings = showTournamentStandings;
-window.showUsersList = showUsersList;
-window.showAddTournamentModal = showAddTournamentModal;
-window.showGameDetails = showGameDetails;
-window.showGameResults = showGameResults;
-window.saveGameResults = saveGameResults;
-window.togglePayment = togglePayment;
-window.startGame = startGame;
-window.registerUser = registerUser;
-window.loginAsUser = loginAsUser;
-window.loginAsAdmin = loginAsAdmin;
-window.closeModal = closeModal;
+// Запуск при загрузке страницы
+document.addEventListener('DOMContentLoaded', init);
 
