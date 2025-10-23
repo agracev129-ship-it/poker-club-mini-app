@@ -9,7 +9,7 @@
 </head>
 <body>
     <div id="app">
-        <!-- Главная страница -->
+        <!-- ГЛАВНАЯ СТРАНИЦА -->
         <div class="tab-content active" id="home">
             <!-- Компактный хедер -->
             <div class="header-compact">
@@ -37,39 +37,39 @@
                 <!-- Карточки турниров -->
                 <div class="tournament-grid">
                     <!-- Главный турнир -->
-                    <div class="tournament-card tournament-primary">
+                    <button class="tournament-card tournament-primary" onclick="showGameDetails(1)">
                         <div class="tournament-players">
                             <div class="player-dot"></div>
                             <div class="player-dot"></div>
                             <div class="player-dot"></div>
                         </div>
                         <div class="tournament-info">
-                            <div class="tournament-type">Texas Hold'em</div>
-                            <div class="tournament-time">19:00</div>
+                            <div class="tournament-type">Texas Holdem</div>
+                            <div class="tournament-time">18:00</div>
                         </div>
-                        <button class="tournament-arrow">
+                        <div class="tournament-arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="m9 18 6-6-6-6"/>
                             </svg>
-                        </button>
-                    </div>
+                        </div>
+                    </button>
 
                     <!-- Второй турнир -->
-                    <div class="tournament-card tournament-secondary">
+                    <button class="tournament-card tournament-secondary" onclick="showGameDetails(2)">
                         <div class="tournament-players">
                             <div class="player-dot gray"></div>
                             <div class="player-dot gray"></div>
                         </div>
                         <div class="tournament-info">
                             <div class="tournament-type gray">Omaha</div>
-                            <div class="tournament-time">20:30</div>
+                            <div class="tournament-time">20:00</div>
                         </div>
-                        <button class="tournament-arrow">
+                        <div class="tournament-arrow">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="m9 18 6-6-6-6"/>
                             </svg>
-                        </button>
-                    </div>
+                        </div>
+                    </button>
                 </div>
 
                 <!-- Карточка статистики -->
@@ -141,40 +141,106 @@
             </div>
         </div>
 
-        <!-- Остальные вкладки (Games, Tournaments, Rating, Profile, Admin) -->
+        <!-- ИГРЫ -->
         <div class="tab-content" id="games">
-            <div class="section-header">
-                <h2>🎮 Игры</h2>
+            <div class="page-header">
+                <h2>Игры</h2>
+                <p class="subtitle">Расписание предстоящих игр</p>
             </div>
             <div id="gamesList" class="games-list"></div>
+            <div class="stats-summary">
+                <div class="summary-card">
+                    <div class="summary-label">Статистика игр</div>
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <div class="summary-number">12</div>
+                            <div class="summary-text">Сыграно</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-number">8</div>
+                            <div class="summary-text">Предстоит</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-number">4</div>
+                            <div class="summary-text">Побед</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- ТУРНИРЫ -->
         <div class="tab-content" id="tournaments">
-            <div class="section-header">
-                <h2>🏆 Турниры</h2>
+            <div class="page-header">
+                <h2>Турниры</h2>
+                <p class="subtitle">Активные и предстоящие турниры</p>
             </div>
-            <div id="tournamentsList" class="tournaments-list"></div>
+            <div id="tournamentsList"></div>
         </div>
 
+        <!-- РЕЙТИНГ -->
         <div class="tab-content" id="rating">
-            <div class="section-header">
-                <h2>📊 Рейтинг</h2>
+            <div class="page-header">
+                <h2>Рейтинг</h2>
+                <p class="subtitle">Топ игроков клуба</p>
             </div>
-            <div id="ratingList" class="rating-list"></div>
+            <div id="ratingContent"></div>
         </div>
 
+        <!-- ПРОФИЛЬ -->
         <div class="tab-content" id="profile">
-            <div class="section-header">
-                <h2>👤 Профиль</h2>
-            </div>
-            <div id="profileContent" class="profile-content"></div>
+            <div id="profileContent"></div>
         </div>
 
+        <!-- АДМИН-ПАНЕЛЬ -->
         <div class="tab-content" id="admin">
-            <div class="section-header">
+            <div class="page-header">
                 <h2>👑 Админ-панель</h2>
+                <p class="subtitle">Управление клубом</p>
             </div>
-            <div id="adminContent" class="admin-content"></div>
+            <div id="adminContent"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для деталей игры -->
+    <div class="modal" id="gameModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalGameName"></h3>
+                <button class="modal-close" onclick="closeGameModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="game-info-row">
+                    <div class="info-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="info-icon">
+                            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/>
+                            <line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
+                        </svg>
+                        <span id="modalGameDate"></span>
+                    </div>
+                    <div class="info-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="info-icon">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span id="modalGameTime"></span>
+                    </div>
+                    <div class="info-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="info-icon">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                        </svg>
+                        <span id="modalGamePlayers"></span>
+                    </div>
+                </div>
+                <div class="game-description-card">
+                    <h4>Формат игры</h4>
+                    <p id="modalGameDescription"></p>
+                </div>
+                <button class="modal-register-btn" id="registerBtn" onclick="toggleRegistration()"></button>
+            </div>
         </div>
     </div>
 
